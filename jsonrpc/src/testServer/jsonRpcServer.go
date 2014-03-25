@@ -34,14 +34,14 @@ func startJSONServerOrig() {
 // simpler version
 func startJSONServer() {
 
-	rpc.Register(new(arith.Arith))
+	arithServer := new(arith.Arith)
+	rpc.Register(arithServer)
 
 	l, e := net.Listen("tcp", ":8222")
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
 	defer l.Close()
-	fmt.Printf("listener address: %v\n", l.Addr().String())
 
 	for {
 		conn, err := l.Accept()
@@ -49,7 +49,9 @@ func startJSONServer() {
 			log.Fatal(err)
 		}
 
+		fmt.Printf("processing jsonrpc connection: %v\n", conn.RemoteAddr().String())
 		jsonrpc.ServeConn(conn)
+		fmt.Printf("arithServer.lastCall %s\n", arithServer.LastCall)
 	}
 }
 
@@ -87,5 +89,7 @@ func listenUDP() {
 }
 
 func main() {
-	startJSONServer()
+	go startJSONServer()
+
+	listenUDP()
 }

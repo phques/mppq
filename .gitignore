@@ -5,7 +5,7 @@ package-cache/
 *.log
 stderr
 stdout
-Pharo.exe.lnk
+*.exe.lnk
 
 
 ### auto-gen by DevStudio for C# project etc..
