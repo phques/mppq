@@ -1,0 +1,14 @@
+{
+	"category" : "PQTestJsonRPC",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "PhilippeQuesnel 3/25/2014 01:13",
+	"instvars" : [
+		 ],
+	"name" : "ArithReq",
+	"pools" : [
+		 ],
+	"super" : "JsonRpcReq",
+	"type" : "normal" }

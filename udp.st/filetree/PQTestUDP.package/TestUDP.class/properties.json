@@ -1,0 +1,16 @@
+{
+	"category" : "PQTestUDP",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		"clientConn",
+		"broadcastHost",
+		"broadcastPort" ],
+	"name" : "TestUDP",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

@@ -1,0 +1,15 @@
+{
+	"category" : "PQTestJsonRPC",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "PhilippeQuesnel 3/25/2014 01:08",
+	"instvars" : [
+		"A",
+		"B" ],
+	"name" : "ArithArg",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

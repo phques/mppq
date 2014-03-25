@@ -1,0 +1,17 @@
+{
+	"category" : "PQTestJsonRPC",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		"idSeq" ],
+	"commentStamp" : "PhilippeQuesnel 3/25/2014 01:12",
+	"instvars" : [
+		"jsonrpc",
+		"method",
+		"params",
+		"id" ],
+	"name" : "JsonRpcReq",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }
