@@ -2,10 +2,12 @@ package-cache/
 *.exe
 *.changes
 *.image
+*.sources
 *.log
 stderr
 stdout
 *.exe.lnk
+*.desktop
 
 
 ### auto-gen by DevStudio for C# project etc..
