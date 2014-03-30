@@ -1,0 +1,14 @@
+
++ wait msg
+ + if "mppq.whosthere?"
+   + if "*" or myServiceName
+     + send back answer (on address from udp packet)
+       "mppq.imhere!" + JSON object
+       {
+         serviceName
+         'hostname' (used to id whos who)
+         onPort
+         protocol  (eg 'jsonrpc')
+       }
+       // note that the host IP will be picked from the UDP packet (??)
+       
