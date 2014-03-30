@@ -44,6 +44,14 @@ func main() {
 	}
     
 	udpConn, err := net.ListenUDP("udp4", localUdpAddr)
+
+    //~ ethname := "{5BF6D791-D59A-40A0-BDD0-FADD0A065A8E}"
+    //~ interf, err := net.InterfaceByName(ethname)
+    //~ fmt.Printf("%v, %v\n", err, interf)
+
+    //~ udpConn, err := net.ListenMulticastUDP("udp4", nil, mcaddr)
+    //~ udpConn, err := net.ListenMulticastUDP("udp4", interf, remoteBroadcastUdpAddr)
+
 	if err != nil {
 		log.Fatal("error ListenUDP: ", err)
 	}

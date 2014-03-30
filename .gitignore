@@ -8,7 +8,7 @@ stderr
 stdout
 *.exe.lnk
 *.desktop
-
+*-arm
 
 ### auto-gen by DevStudio for C# project etc..
 
