@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	// we will listen for udp messages on this mutlicast address
+	// we will listen for udp messages on this multicast address
 	multicastUdpAddr = "239.255.0.13:1440"
 )
 
 //---------
 
 // this is what we answer back from a 'whos there' msg
-// nb: caller will get our IP from the returned udp packet
-type ImThere struct {
+// nb: caller should get our IP from the returned udp packet
+type ServiceDef struct {
 	ServiceName  string
 	ProviderName string
 	HostPort     int

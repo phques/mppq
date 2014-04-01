@@ -17,9 +17,9 @@ import (
 // answering with info about service if we match the queried service
 type Provider struct {
 	Quit       chan bool
-	AddService chan ImThere
-	DelService chan ImThere
-	services   map[string]ImThere
+	AddService chan ServiceDef
+	DelService chan ServiceDef
+	services   map[string]ServiceDef
 }
 
 //---------
@@ -43,16 +43,16 @@ func openMUdpConn() *net.UDPConn {
 //---------------
 
 func NewProvider() *Provider {
-	mppq := new(Provider)
-	mppq.Quit = make(chan bool)
-	mppq.AddService = make(chan ImThere)
-	mppq.DelService = make(chan ImThere)
-	mppq.services = make(map[string]ImThere)
+	prov := new(Provider)
+	prov.Quit = make(chan bool)
+	prov.AddService = make(chan ServiceDef)
+	prov.DelService = make(chan ServiceDef)
+	prov.services = make(map[string]ServiceDef)
 
-	return mppq
+	return prov
 }
 
-func (mppq *Provider) MarcoPoloLoop() {
+func (prov *Provider) MarcoPoloLoop() {
 	udpConn := openMUdpConn()
 	defer udpConn.Close()
 
@@ -62,17 +62,17 @@ func (mppq *Provider) MarcoPoloLoop() {
 	var chanReadOk = true
 	for chanReadOk {
 		select {
-		case _ = <-mppq.Quit:
+		case _ = <-prov.Quit:
 			chanReadOk = false
 
-		case jsonAdd, chanReadOk := <-mppq.AddService:
+		case jsonAdd, chanReadOk := <-prov.AddService:
 			if chanReadOk {
-				mppq.addService(jsonAdd)
+				prov.addService(jsonAdd)
 			}
 
-		case jsonDel, chanReadOk := <-mppq.DelService:
+		case jsonDel, chanReadOk := <-prov.DelService:
 			if chanReadOk {
-				mppq.delService(jsonDel)
+				prov.delService(jsonDel)
 			}
 
 		case udpPacket, chanReadOk := <-udpChan:
@@ -86,10 +86,10 @@ func (mppq *Provider) MarcoPoloLoop() {
 
 //------------
 
-func (mppq *Provider) addService(service ImThere) {
-	mppq.services[service.ServiceName] = service
+func (prov *Provider) addService(service ServiceDef) {
+	prov.services[service.ServiceName] = service
 }
 
-func (mppq *Provider) delService(service ImThere) {
-	delete(mppq.services, service.ServiceName)
+func (prov *Provider) delService(service ServiceDef) {
+	delete(prov.services, service.ServiceName)
 }
