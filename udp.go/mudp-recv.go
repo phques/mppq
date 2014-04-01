@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// --- listen for udp msg ---
-	mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.13.4:1440")
+	mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.0.13:1440")
 	//mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.43.99:1888")
 	//mcaddr, err := net.ResolveUDPAddr("udp4", "224.0.1.60:1888")
 	if err != nil {
