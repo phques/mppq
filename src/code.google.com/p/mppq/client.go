@@ -89,5 +89,8 @@ func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
 		return
 	}
 
+	// add the remote udp address, taken from udpPacket
+	serviceDef.RemoteAddr = udpPacket.remoteAddr
+
 	client.serviceDefs = append(client.serviceDefs, serviceDef)
 }

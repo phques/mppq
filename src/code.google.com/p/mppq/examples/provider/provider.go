@@ -6,6 +6,7 @@ package main
 import (
 	"code.google.com/p/mppq"
 	"fmt"
+	"os"
 )
 
 func main() {
@@ -16,9 +17,10 @@ func main() {
 	go prov.MarcoPoloLoop()
 
 	// register a service (provider main loop must be running)
+	hostname, _ := os.Hostname()
 	prov.AddService <- mppq.ServiceDef{
 		ServiceName:  "androidPush",
-		ProviderName: "moue",
+		ProviderName: hostname,
 		HostPort:     1234,
 		Protocol:     "jsonrpc1",
 	}

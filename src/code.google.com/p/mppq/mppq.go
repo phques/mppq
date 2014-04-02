@@ -40,6 +40,8 @@ type ServiceDef struct {
 	ProviderName string
 	HostPort     int
 	Protocol     string // ie "jsonrpcv1"
+	// filled by Client lib when recving response from query
+	RemoteAddr *net.UDPAddr `json:"RemoteAddr,omitempty"`
 }
 
 // holds the data / remote address when a udp msg is received
