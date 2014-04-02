@@ -5,7 +5,9 @@
 package mppq
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	//"fmt"
 	"log"
 	"net"
 )
@@ -16,6 +18,8 @@ import (
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
 type Provider struct {
+	run        bool
+	udpConn    *net.UDPConn
 	Quit       chan bool
 	AddService chan ServiceDef
 	DelService chan ServiceDef
@@ -25,14 +29,9 @@ type Provider struct {
 //---------
 
 func openMUdpConn() *net.UDPConn {
-	// resolve multicast udp address
-	mcaddr, err := net.ResolveUDPAddr("udp4", multicastUdpAddr)
-	if err != nil {
-		log.Fatal("failed to resolve multicast udp address. ", err)
-	}
 
 	// open listen connection on default system interface
-	mudpConn, err := net.ListenMulticastUDP("udp4", nil, mcaddr)
+	mudpConn, err := net.ListenMulticastUDP("udp4", nil, multicastUdpAddr)
 	if err != nil {
 		log.Fatal("failed to open multicast udp listen connection. ", err)
 	}
@@ -44,6 +43,7 @@ func openMUdpConn() *net.UDPConn {
 
 func NewProvider() *Provider {
 	prov := new(Provider)
+	prov.run = false
 	prov.Quit = make(chan bool)
 	prov.AddService = make(chan ServiceDef)
 	prov.DelService = make(chan ServiceDef)
@@ -53,14 +53,16 @@ func NewProvider() *Provider {
 }
 
 func (prov *Provider) MarcoPoloLoop() {
-	udpConn := openMUdpConn()
-	defer udpConn.Close()
+	prov.udpConn = openMUdpConn()
+	defer prov.udpConn.Close()
 
 	udpChan := make(chan *UDPPacket)
-	go udpReadLoop(udpConn, udpChan)
+	go udpReadLoop(prov.udpConn, udpChan)
+
+	prov.run = true
 
 	var chanReadOk = true
-	for chanReadOk {
+	for chanReadOk && prov.run {
 		select {
 		case _ = <-prov.Quit:
 			chanReadOk = false
@@ -77,11 +79,32 @@ func (prov *Provider) MarcoPoloLoop() {
 
 		case udpPacket, chanReadOk := <-udpChan:
 			if chanReadOk {
-				fmt.Printf("MarcoPoloLoop, read %d bytes '%s' from udp (remote %s)\n",
-					len(udpPacket.data), udpPacket.data, udpPacket.remoteAddr.String())
+				prov.processUdpPacket(udpPacket)
 			}
 		}
 	}
+}
+
+func (prov *Provider) Stop() {
+	//if (!prov.stopped) {
+	prov.run = false
+	prov.Quit <- true
+	//close(prov.Quit)
+	//}
+}
+
+func (prov *Provider) Close() {
+	prov.Stop()
+
+	// prov.udpconn closed by defer in MarcoPoloLoop
+	/*
+		stopped    bool
+		udpConn    *net.UDPConn
+		Quit       chan bool
+		AddService chan ServiceDef
+		DelService chan ServiceDef
+		services   map[string]ServiceDef
+	*/
 }
 
 //------------
@@ -92,4 +115,39 @@ func (prov *Provider) addService(service ServiceDef) {
 
 func (prov *Provider) delService(service ServiceDef) {
 	delete(prov.services, service.ServiceName)
+}
+
+func (prov *Provider) processUdpPacket(packet *UDPPacket) {
+
+	// did we receive a whosthere mppq query ?
+	if !bytes.HasPrefix(packet.data, []byte(whosthereStr)) {
+		// debug (hmm, not a good idea too output received unknown data ! ;-p)
+		log.Printf("received unknown msg [%s]", packet.data)
+		return
+	}
+
+	// get serviceName parameter of whosthere "whosthere?serviceName"
+	serviceName := string(packet.data[len(whosthereStr):])
+	// debug
+	log.Printf("received whosthere for [%s]", serviceName)
+
+	// lookup serviceName in our registered services
+	serviceDef, ok := prov.services[serviceName]
+	if !ok {
+		log.Printf(" .. not registered")
+		return
+	}
+
+	// got it ! create json response
+	jsonmsg, err := json.Marshal(serviceDef)
+	if err != nil {
+		// ooops ?
+		log.Fatal("error json marshaling serviceDef. ", err)
+	}
+
+	// send back json response to udp sender
+	if _, err := prov.udpConn.WriteToUDP(jsonmsg, packet.remoteAddr); err != nil {
+		log.Printf("error sending back udp response. ", err)
+	}
+
 }

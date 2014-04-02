@@ -10,6 +10,19 @@ import (
 
 func main() {
 	fmt.Println("Hello World!")
-	mppq := mppq.NewProvider()
-	mppq.MarcoPoloLoop()
+
+	// start mppq provider
+	prov := mppq.NewProvider()
+	go prov.MarcoPoloLoop()
+
+	// register a service (provider main loop must be running)
+	prov.AddService <- mppq.ServiceDef{
+		ServiceName:  "androidPush",
+		ProviderName: "moue",
+		HostPort:     1234,
+		Protocol:     "jsonrpc1",
+	}
+
+	// wait
+	select {}
 }

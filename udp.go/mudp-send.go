@@ -63,6 +63,6 @@ func main() {
 	// send 'msg's
 	send(udpConn, mcaddr, "this is msg 1")
 	send(udpConn, mcaddr, "this is msg 2")
-	send(udpConn, mcaddr, "this is msg 3")
+	send(udpConn, mcaddr, "mppq.whosthere?androidPush")
 	send(udpConn, mcaddr, "quit")
 }
