@@ -5,6 +5,7 @@
 package mppq
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 	"time"
@@ -61,6 +62,7 @@ func (client *Client) doQuery() error {
 	// loop until timeout, gathering recvd ServiceDef
 	//##PQ TODO: should resend query every 1sec or something ! (?)
 	//## but then we would recv multiple entries from same services !
+	//## just let user call it multiple time to handle this !
 	timer := time.NewTimer(client.waitFor)
 	done := false
 	for !done {
@@ -79,6 +81,13 @@ func (client *Client) doQuery() error {
 
 func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
 	log.Printf("recvd response [%s]", udpPacket.data)
-	//## PQ TODO: parse json response & save
-	//client.serviceDefs= append(client.serviceDefs, serviceDef)
+
+	// decode json ServiceDef response
+	var serviceDef ServiceDef
+	if err := json.Unmarshal(udpPacket.data, &serviceDef); err != nil {
+		log.Printf("error decoding json ServiceDef response. ", err)
+		return
+	}
+
+	client.serviceDefs = append(client.serviceDefs, serviceDef)
 }

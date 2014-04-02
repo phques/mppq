@@ -24,7 +24,7 @@ func main() {
 	check(err)
 
 	log.Printf("got %d services definitions\n", len(serviceDefs))
-	for sdef := range serviceDefs {
-		log.Printf("%q\n", sdef)
+	for _, sdef := range serviceDefs {
+		log.Printf("%v\n", sdef)
 	}
 }
