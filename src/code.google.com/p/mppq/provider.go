@@ -28,15 +28,16 @@ type Provider struct {
 
 //---------
 
-func openMUdpConn() *net.UDPConn {
-
+func openUdpConn() *net.UDPConn {
 	// open listen connection on default system interface
+	// NB: on Win8/8.1, we *can* use multicast to listen,
+	//     it will work if we *send broadcast* !
 	mudpConn, err := net.ListenMulticastUDP("udp4", nil, multicastUdpAddr)
 	if err != nil {
 		log.Fatal("failed to open multicast udp listen connection. ", err)
 	}
 
-	return mudpConn
+	return udpConn
 }
 
 //---------------
@@ -53,7 +54,8 @@ func NewProvider() *Provider {
 }
 
 func (prov *Provider) MarcoPoloLoop() {
-	prov.udpConn = openMUdpConn()
+	// open udp connection
+	prov.udpConn = openUdpConn()
 	defer prov.udpConn.Close()
 
 	udpChan := make(chan *UDPPacket)

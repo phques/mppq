@@ -11,23 +11,38 @@ import (
 )
 
 const (
-	// we will listen for udp messages on this multicast address
-	multicastUdpAddrStr = "239.255.0.13:1440"
+	// we will listen for udp messages on this
+	udpPort             = 1440
+	udpPortStr          = ":1440"
+	multicastUdpAddrStr = "239.255.0.13"
+	broadcastUdpAddrStr = "255.255.255.255"
 
 	whosthereStr = "mppq.whosthere?"
 )
 
 var (
-	// setup int init()
-	multicastUdpAddr *net.UDPAddr = nil
+	// setup in init()
+	multicastUdpAddr *net.UDPAddr
+	broadcastUdpAddr *net.UDPAddr
 )
 
 func init() {
-	// resolve multicast udp address
+	// resolve udp addresses
 	var err error
-	multicastUdpAddr, err = net.ResolveUDPAddr("udp4", multicastUdpAddrStr)
+	var addrstr string
+
+	// resolve multicast
+	addrstr = multicastUdpAddrStr + udpPortStr
+	multicastUdpAddr, err = net.ResolveUDPAddr("udp4", addrstr)
 	if err != nil {
 		log.Fatal("failed to resolve multicast udp address. ", err)
+	}
+
+	// resolve broadcast
+	addrstr = broadcastUdpAddrStr + udpPortStr
+	broadcastUdpAddr, err = net.ResolveUDPAddr("udp4", addrstr)
+	if err != nil {
+		log.Fatal("failed to resolve broadcast udp address. ", err)
 	}
 }
 

@@ -12,8 +12,9 @@ import (
 )
 
 type Client struct {
-	name    string
-	waitFor time.Duration
+	name         string
+	waitFor      time.Duration
+	useBroadcast bool
 
 	udpConn     *net.UDPConn // created/opened only during query func
 	serviceDefs []ServiceDef
@@ -21,11 +22,13 @@ type Client struct {
 
 //----------
 
-func QueryService(name string, waitFor time.Duration) ([]ServiceDef, error) {
-	client := &Client{name: name, waitFor: waitFor}
+func QueryService(name string, waitFor time.Duration, useBroadcast bool) ([]ServiceDef, error) {
+	log.Printf("dbg QueryService useBroadcast = %v\n", useBroadcast)
 
-	err := client.doQuery()
-	if err != nil {
+	// create Client object
+	client := &Client{name: name, waitFor: waitFor, useBroadcast: useBroadcast}
+
+	if err := client.doQuery(); err != nil {
 		return nil, err
 	}
 
@@ -37,13 +40,10 @@ func QueryService(name string, waitFor time.Duration) ([]ServiceDef, error) {
 func (client *Client) doQuery() error {
 
 	// open udp connection (any local address & port)
-	localUdpAddr, err := net.ResolveUDPAddr("udp4", ":0")
-	if err != nil {
-		log.Println("error ResolveUDPAddrt local", err)
-		return err
-	}
+	var err error
+	localUdpAddr := net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
 
-	client.udpConn, err = net.ListenUDP("udp4", localUdpAddr)
+	client.udpConn, err = net.ListenUDP("udp4", &localUdpAddr)
 	if err != nil {
 		log.Println("failed to open local udp connection. ", err)
 		return err
@@ -57,7 +57,13 @@ func (client *Client) doQuery() error {
 
 	// send query !
 	query := whosthereStr + client.name
-	client.udpConn.WriteToUDP([]byte(query), multicastUdpAddr)
+	if client.useBroadcast {
+		//## for Window8/8.1, cant recv multicast, send broadcast
+		client.udpConn.WriteToUDP([]byte(query), broadcastUdpAddr)
+	} else {
+		// multicast
+		client.udpConn.WriteToUDP([]byte(query), multicastUdpAddr)
+	}
 
 	// loop until timeout, gathering recvd ServiceDef
 	//##PQ TODO: should resend query every 1sec or something ! (?)
