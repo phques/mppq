@@ -12,38 +12,22 @@ import (
 
 const (
 	// we will listen for udp messages on this
-	udpPort             = 1440
-	udpPortStr          = ":1440"
-	multicastUdpAddrStr = "239.255.0.13"
-	broadcastUdpAddrStr = "255.255.255.255"
-
+	udpPort      = 1440
 	whosthereStr = "mppq.whosthere?"
 )
 
 var (
 	// setup in init()
-	multicastUdpAddr *net.UDPAddr
-	broadcastUdpAddr *net.UDPAddr
+	multicastUdpAddr net.UDPAddr
+	broadcastUdpAddr net.UDPAddr
 )
 
 func init() {
-	// resolve udp addresses
-	var err error
-	var addrstr string
+	//RFC 2365 - Administratively Scoped IP Multicast
+	//  The IPv4 Local Scope -- 239.255.0.0/16
+	multicastUdpAddr = net.UDPAddr{IP: net.IPv4(239, 255, 0, 13), Port: udpPort}
 
-	// resolve multicast
-	addrstr = multicastUdpAddrStr + udpPortStr
-	multicastUdpAddr, err = net.ResolveUDPAddr("udp4", addrstr)
-	if err != nil {
-		log.Fatal("failed to resolve multicast udp address. ", err)
-	}
-
-	// resolve broadcast
-	addrstr = broadcastUdpAddrStr + udpPortStr
-	broadcastUdpAddr, err = net.ResolveUDPAddr("udp4", addrstr)
-	if err != nil {
-		log.Fatal("failed to resolve broadcast udp address. ", err)
-	}
+	broadcastUdpAddr = net.UDPAddr{IP: net.IPv4(255, 255, 255, 255), Port: udpPort}
 }
 
 //---------
@@ -56,7 +40,7 @@ type ServiceDef struct {
 	HostPort     int
 	Protocol     string // ie "jsonrpcv1"
 	// filled by Client lib when recving response from query
-	RemoteAddr *net.UDPAddr `json:"RemoteAddr,omitempty"`
+	RemoteIP *net.IP `json:"RemoteIP,omitempty"`
 }
 
 // holds the data / remote address when a udp msg is received

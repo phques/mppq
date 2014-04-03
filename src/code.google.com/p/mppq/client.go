@@ -59,10 +59,10 @@ func (client *Client) doQuery() error {
 	query := whosthereStr + client.name
 	if client.useBroadcast {
 		//## for Window8/8.1, cant recv multicast, send broadcast
-		client.udpConn.WriteToUDP([]byte(query), broadcastUdpAddr)
+		client.udpConn.WriteToUDP([]byte(query), &broadcastUdpAddr)
 	} else {
 		// multicast
-		client.udpConn.WriteToUDP([]byte(query), multicastUdpAddr)
+		client.udpConn.WriteToUDP([]byte(query), &multicastUdpAddr)
 	}
 
 	// loop until timeout, gathering recvd ServiceDef
@@ -74,9 +74,11 @@ func (client *Client) doQuery() error {
 	for !done {
 		select {
 		case <-timer.C:
+			// time is over, we're done
 			done = true
 
 		case udpPacket := <-msgChan:
+			// received udp reponse packet, processs it
 			client.processUdpPacket(udpPacket)
 		}
 	}
@@ -96,7 +98,8 @@ func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
 	}
 
 	// add the remote udp address, taken from udpPacket
-	serviceDef.RemoteAddr = udpPacket.remoteAddr
+	remIP := udpPacket.remoteAddr.IP
+	serviceDef.RemoteIP = &remIP
 
 	client.serviceDefs = append(client.serviceDefs, serviceDef)
 }

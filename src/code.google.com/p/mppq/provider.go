@@ -32,7 +32,7 @@ func openUdpConn() *net.UDPConn {
 	// open listen connection on default system interface
 	// NB: on Win8/8.1, we *can* use multicast to listen,
 	//     it will work if we *send broadcast* !
-	mudpConn, err := net.ListenMulticastUDP("udp4", nil, multicastUdpAddr)
+	udpConn, err := net.ListenMulticastUDP("udp4", nil, &multicastUdpAddr)
 	if err != nil {
 		log.Fatal("failed to open multicast udp listen connection. ", err)
 	}
