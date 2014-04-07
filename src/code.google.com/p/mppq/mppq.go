@@ -13,7 +13,8 @@ import (
 const (
 	// we will listen for udp messages on this
 	udpPort      = 1440
-	whosthereStr = "mppq.whosthere?"
+	whosthereStr = "mppq.whosthere?" // query sent to find services
+	ImhereStr    = "mppq.imHere!"    // response with serviceDef
 )
 
 var (

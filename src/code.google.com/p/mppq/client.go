@@ -5,6 +5,7 @@
 package mppq
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net"
@@ -90,9 +91,19 @@ func (client *Client) doQuery() error {
 func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
 	log.Printf("recvd response [%s]", udpPacket.data)
 
+	// did we receive a whosthere mppq query ?
+	if !bytes.HasPrefix(udpPacket.data, []byte(ImhereStr)) {
+		// debug (hmm, not a good idea too output received unknown data ! ;-p)
+		log.Printf("received unknown response")
+		return
+	}
+
+	// get serviceDef parameter of Imhere! "Imhere!serviceDefJson"
+	serviceDefJson := udpPacket.data[len(ImhereStr):]
+
 	// decode json ServiceDef response
 	var serviceDef ServiceDef
-	if err := json.Unmarshal(udpPacket.data, &serviceDef); err != nil {
+	if err := json.Unmarshal(serviceDefJson, &serviceDef); err != nil {
 		log.Printf("error decoding json ServiceDef response. ", err)
 		return
 	}
