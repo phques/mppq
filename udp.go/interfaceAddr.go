@@ -3,9 +3,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
-    "log"
 )
 
 func revMask(ip net.IP, mask net.IPMask) net.IP {
@@ -60,7 +60,7 @@ func f2() {
 	}
 	for _, interf := range interfs {
 		addrs, _ := interf.Addrs()
-		fmt.Printf("%v %v %b\n", interf.Name, addrs, interf.Flags)
+		fmt.Printf("%v %v %b %d\n", interf.Name, addrs, interf.Flags, interf.Index)
 	}
 }
 
@@ -94,25 +94,20 @@ func f3() {
 	fmt.Printf("broadcast %v\n", ip)
 }
 
+func f4() {
+	// windows, hmm, superb name ;-p
+	ethname := "{5BF6D791-D59A-40A0-BDD0-FADD0A065A8E}"
+	interf, err := net.InterfaceByName(ethname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%v\n", interf)
+}
+
 func main() {
 
 	//f1()
-	//f2()
+	f2()
 	//f3()
-    
-    // windows, hmm, superb name ;-p
-    ethname := "{5BF6D791-D59A-40A0-BDD0-FADD0A065A8E}"
-    interf, err := net.InterfaceByName(ethname)
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Printf("%v\n", interf)
-    
-    // not found on windows ...
-    ethname = "en0"
-    interf, err = net.InterfaceByName(ethname)
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Printf("%v\n", interf)
+
 }

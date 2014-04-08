@@ -9,22 +9,12 @@ import (
 
 func main() {
 	// --- listen for udp msg ---
-	mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.0.13:1440")
-	//mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.43.99:1888")
-	//mcaddr, err := net.ResolveUDPAddr("udp4", "224.0.1.60:1888")
+	mcaddr, err := net.ResolveUDPAddr("udp6", "[FF01::1]:1440")
 	if err != nil {
 		log.Fatal("error ResolveUDPAddr ", err)
 	}
 
-	//~ ethname := "{5BF6D791-D59A-40A0-BDD0-FADD0A065A8E}"
-	//~ interf, err := net.InterfaceByName(ethname)
-	//~ fmt.Printf("%v, %v\n", err, interf)
-
-	//~ interf, err := net.InterfaceByIndex(4)
-	//~ fmt.Printf("%v, %v\n", err, interf)
-	//~ conn, err := net.ListenMulticastUDP("udp4", interf, mcaddr)
-
-	conn, err := net.ListenMulticastUDP("udp4", nil, mcaddr)
+	conn, err := net.ListenMulticastUDP("udp6", nil, mcaddr)
 	if err != nil {
 		log.Fatal("error ListenMulticastUDP ", err)
 	}
