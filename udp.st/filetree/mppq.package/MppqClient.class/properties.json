@@ -1,0 +1,20 @@
+{
+	"category" : "mppq",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "PhilippeQuesnel 4/7/2014 22:49",
+	"instvars" : [
+		"port",
+		"mcaddr",
+		"bcaddr",
+		"clientConn",
+		"useBroadcast",
+		"whosthereStr",
+		"imhereStr" ],
+	"name" : "MppqClient",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }
