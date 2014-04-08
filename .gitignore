@@ -9,6 +9,9 @@ stdout
 *.exe.lnk
 *.desktop
 *-arm
+# re-add this for smalltalk FileTree output !  (cf below, MsDev ignores *.meta)
+## cant figure out how to make this work :-(
+## !monticello.*/
 
 ### auto-gen by DevStudio for C# project etc..
 
@@ -39,7 +42,8 @@ build/
 *_i.c
 *_p.c
 *.ilk
-*.meta
+# we need this for monticello.meta (filetree package)
+#*.meta
 *.obj
 *.pch
 *.pdb

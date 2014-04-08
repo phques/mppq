@@ -2,7 +2,7 @@ as yet unclassified
 queryService: serviceName waitFor: waitSecs
 	"does a query for service, returns found serviceDefs"
 
-	| query  |
+	| query responses |
 
 	"create query"
 	query := self createQuery: serviceName .
@@ -12,3 +12,5 @@ queryService: serviceName waitFor: waitSecs
 	self sendQuery: query.
 	
 	"get response(s)"
+	responses := self getResponses.
+	

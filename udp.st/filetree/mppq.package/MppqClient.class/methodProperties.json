@@ -5,8 +5,9 @@
 		"close" : "PhilippeQuesnel 4/8/2014 12:07",
 		"connect" : "PhilippeQuesnel 4/7/2014 22:59",
 		"createQuery:" : "PhilippeQuesnel 4/8/2014 12:16",
-		"initialize" : "PhilippeQuesnel 4/7/2014 23:05",
-		"queryService:waitFor:" : "PhilippeQuesnel 4/8/2014 12:18",
+		"getResponses" : "PhilippeQuesnel 4/8/2014 15:23",
+		"initialize" : "PhilippeQuesnel 4/8/2014 15:19",
+		"queryService:waitFor:" : "PhilippeQuesnel 4/8/2014 15:20",
 		"sendQuery:" : "PhilippeQuesnel 4/8/2014 12:26",
 		"useBroadcast" : "PhilippeQuesnel 4/8/2014 12:06",
 		"useBroadcast:" : "PhilippeQuesnel 4/8/2014 12:06" } }

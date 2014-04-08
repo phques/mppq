@@ -12,7 +12,8 @@
 		"clientConn",
 		"useBroadcast",
 		"whosthereStr",
-		"imhereStr" ],
+		"imhereStr",
+		"bufferSize" ],
 	"name" : "MppqClient",
 	"pools" : [
 		 ],

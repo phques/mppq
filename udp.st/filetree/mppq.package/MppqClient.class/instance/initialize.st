@@ -6,6 +6,7 @@ initialize
 	bcaddr := #[255 255 255 255] asSocketAddress . "broadcast address"
 	clientConn := nil.
 	useBroadcast := false.
+	bufferSize := 4096.
 	
 	whosthereStr := 'mppq.whosthere?'. "query sent to find services"
 	imhereStr := 'mppq.imHere!'.    "response with serviceDef"
