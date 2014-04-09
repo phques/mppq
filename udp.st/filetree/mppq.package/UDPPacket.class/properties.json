@@ -1,0 +1,15 @@
+{
+	"category" : "mppq",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "PhilippeQuesnel 4/9/2014 11:54",
+	"instvars" : [
+		"data",
+		"remoteAddr" ],
+	"name" : "UDPPacket",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

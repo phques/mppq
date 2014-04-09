@@ -2,10 +2,20 @@ as yet unclassified
 getResponses
 	"reads the response(s) after sending the query"
 
-	| buffer |
+	| buffer process responses |
 	buffer := String new: bufferSize.
 	
-	"receiveUDPDataInto: is blocking !
-	 how can we handle waiting for responses for only a specific time ?
-	-> start a thread ? How to stop it ?...
-	"
+	"launch a thread to read udp"
+	responses := OrderedCollection new.
+	
+	"debug"
+	self readUDP: responses.
+	
+	process := [ self readUDP: responses ] fork.
+	
+	"let it run X seconds"
+	responseWaitTime wait.
+	process terminate.
+	
+	"process reponses"
+	self processResponses:  responses.

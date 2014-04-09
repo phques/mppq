@@ -13,7 +13,8 @@
 		"useBroadcast",
 		"whosthereStr",
 		"imhereStr",
-		"bufferSize" ],
+		"bufferSize",
+		"responseWaitTime" ],
 	"name" : "MppqClient",
 	"pools" : [
 		 ],
