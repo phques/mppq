@@ -17,6 +17,18 @@ func send(udpConn *net.UDPConn, remoteAddr *net.UDPAddr, msg string) {
 	}
 
 	fmt.Printf("wrote %d bytes\n", nbBytes)
+    
+    // recv response
+    data := make([]byte, 1024)
+    fmt.Println("wait for response")
+    nbRead, remoteAddr, err := udpConn.ReadFromUDP(data)
+    if err != nil {
+        fmt.Println("error reading udp socket ", err)
+        return
+    }
+    data = data[:nbRead]
+
+    fmt.Printf("read %d bytes '%s' response from udp\n", nbRead, data)
 }
 
 func main() {
@@ -30,6 +42,7 @@ func main() {
 	//mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.43.99:1888")
 	//mcaddr, err := net.ResolveUDPAddr("udp4", "224.0.1.60:1888")
 	mcaddr, err := net.ResolveUDPAddr("udp4", "239.255.0.13:1440")
+	mcaddr, err = net.ResolveUDPAddr("udp4", "255.255.255.255:1440")
 	if err != nil {
 		log.Fatal("error ResolveUDPAddrt ", err)
 	}

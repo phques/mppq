@@ -42,11 +42,16 @@ func main() {
 		udpData := data[:nbRead]
 
 		fmt.Printf("read %d bytes '%s' from udp (remote %s)\n", nbRead, udpData, remoteAddr.String())
+        
+        // send back some response
+        _, err = conn.WriteToUDP([]byte("some response"), remoteAddr)
+        if err != nil {
+            fmt.Println("error sending response ", err)
+            return
+        }
+
 		if string(udpData) == "quit" {
 			break
 		}
-
-		//fmt.Println("wait a sec...")
-		//time.Sleep(1 * time.Second)
 	}
 }
