@@ -1,5 +1,5 @@
-as yet unclassified
-getResponses
+private - notused
+getResponses_
 	"reads the response(s) after sending the query"
 
 	| buffer process responses |

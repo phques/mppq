@@ -1,5 +1,5 @@
-as yet unclassified
-queryService: serviceName waitFor: waitSecs
+querying
+queryService: serviceName waitFor: duration
 	"does a query for service, returns found serviceDefs"
 
 	| query responses |
@@ -12,5 +12,5 @@ queryService: serviceName waitFor: waitSecs
 	self sendQuery: query.
 	
 	"get response(s)"
-	responses := self getResponses.
+	responses := self getResponses: duration.
 	

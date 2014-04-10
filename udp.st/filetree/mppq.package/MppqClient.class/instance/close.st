@@ -1,4 +1,4 @@
-as yet unclassified
+private
 close
 	clientConn close.
 	clientConn  := nil.

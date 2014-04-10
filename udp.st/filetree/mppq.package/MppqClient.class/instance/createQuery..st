@@ -1,3 +1,3 @@
-as yet unclassified
+private
 createQuery: serviceName
 	^ whosthereStr, serviceName

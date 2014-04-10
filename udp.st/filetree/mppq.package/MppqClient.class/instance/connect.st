@@ -1,4 +1,4 @@
-as yet unclassified
+private
 connect
 	"create the udp socket"
 

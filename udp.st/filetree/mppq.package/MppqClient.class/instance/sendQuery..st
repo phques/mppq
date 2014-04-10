@@ -1,4 +1,4 @@
-as yet unclassified
+private
 sendQuery: query
 	| addr |
 	addr := (self useBroadcast) ifTrue: [ bcaddr  ] ifFalse: [ mcaddr ].

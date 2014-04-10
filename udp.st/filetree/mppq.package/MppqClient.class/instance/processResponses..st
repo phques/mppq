@@ -1,8 +1,10 @@
-as yet unclassified
-processResponses:  responses
+private
+processResponses:  packets
 	"TODO"
-	Transcript show: responses size; cr.
+	Transcript show: packets size; cr.
 	
-	responses do: [ :response|
-		Transcript show: response printString; cr.
-	]
+	packets do: [ :packet |
+		Transcript show: packet printString; cr.
+	].
+
+	^ nil.
