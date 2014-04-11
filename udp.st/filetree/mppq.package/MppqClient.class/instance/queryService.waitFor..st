@@ -14,3 +14,6 @@ queryService: serviceName waitFor: duration
 	"get response(s)"
 	responses := self getResponses: duration.
 	
+	"disconnect"
+	self close.
+	
