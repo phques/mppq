@@ -1,4 +1,5 @@
 package-cache/
+pkg/
 *.exe
 *.changes
 *.image
