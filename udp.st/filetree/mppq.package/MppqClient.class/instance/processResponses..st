@@ -1,16 +1,10 @@
 private
 processResponses:  packets
 	"TODO"
-	packets do: [ :packet | | jsonStr |
-		"debug"
-		Transcript show: packet; cr.
-		
-		(packet data beginsWith: imhereStr) ifTrue: [ 
-			jsonStr := packet data allButFirst: imhereStr size.
-			"debug"
-			Transcript cr; show: jsonStr; cr.
-		].
+	Transcript show: packets size; cr.
+	
+	packets do: [ :packet |
+		Transcript show: packet printString; cr.
 	].
 
-	
 	^ nil.

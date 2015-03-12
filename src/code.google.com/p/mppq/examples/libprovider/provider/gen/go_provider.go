@@ -9,11 +9,16 @@ import (
 	"golang.org/x/mobile/bind/seq"
 )
 
-func proxy_Start(out, in *seq.Buffer) {
+func proxy_Register(out, in *seq.Buffer) {
 	param_serviceName := in.ReadUTF16()
-	provider.Start(param_serviceName)
+	provider.Register(param_serviceName)
+}
+
+func proxy_Start(out, in *seq.Buffer) {
+	provider.Start()
 }
 
 func init() {
-	seq.Register("provider", 1, proxy_Start)
+	seq.Register("provider", 1, proxy_Register)
+	seq.Register("provider", 2, proxy_Start)
 }

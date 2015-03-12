@@ -10,6 +10,7 @@ stdout
 *.exe.lnk
 *.desktop
 *-arm
+libgojni.so
 # re-add this for smalltalk FileTree output !  (cf below, MsDev ignores *.meta)
 ## cant figure out how to make this work :-(
 ## !monticello.*/
