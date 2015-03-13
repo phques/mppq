@@ -1,0 +1,15 @@
+
+#NB: you must source this !
+
+#~ export GOPATH=`pwd`
+
+x=`pwd`
+while [ "$x" != "/" ]; do
+    [ -a $x/.go ] && break
+    x=`dirname "$x"`
+done
+if [ "$x" != "/" ]; then
+    export GOPATH="$x"
+    export GOBIN="$x/bin"
+    export PATH="$GOBIN:$PATH"
+fi

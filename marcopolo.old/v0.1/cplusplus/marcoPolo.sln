@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "marco", "marco.vcproj", "{BFBC3254-A9AE-4318-85D8-4587AF561AC0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "polo", "polo.vcproj", "{A1CEF600-1D9F-429A-8241-043B1EA7DA64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BFBC3254-A9AE-4318-85D8-4587AF561AC0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BFBC3254-A9AE-4318-85D8-4587AF561AC0}.Debug|Win32.Build.0 = Debug|Win32
+		{BFBC3254-A9AE-4318-85D8-4587AF561AC0}.Release|Win32.ActiveCfg = Release|Win32
+		{BFBC3254-A9AE-4318-85D8-4587AF561AC0}.Release|Win32.Build.0 = Release|Win32
+		{A1CEF600-1D9F-429A-8241-043B1EA7DA64}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A1CEF600-1D9F-429A-8241-043B1EA7DA64}.Debug|Win32.Build.0 = Debug|Win32
+		{A1CEF600-1D9F-429A-8241-043B1EA7DA64}.Release|Win32.ActiveCfg = Release|Win32
+		{A1CEF600-1D9F-429A-8241-043B1EA7DA64}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
