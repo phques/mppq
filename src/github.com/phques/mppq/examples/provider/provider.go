@@ -4,8 +4,8 @@
 package main
 
 import (
-	"code.google.com/p/mppq"
 	"fmt"
+	"github.com/phques/mppq"
 	"os"
 )
 

@@ -2,13 +2,13 @@
 package provider
 
 import (
-	"code.google.com/p/mppq"
 	"fmt"
+	"github.com/phques/mppq"
 	"os"
 )
 
 var (
-    provider *mppq.Provider
+	provider *mppq.Provider
 )
 
 func Start() {
@@ -35,4 +35,3 @@ func Register(serviceName string) {
 		Protocol:     "jsonrpc1",
 	}
 }
-

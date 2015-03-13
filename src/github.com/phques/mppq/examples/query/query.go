@@ -4,8 +4,8 @@
 package main
 
 import (
-	"code.google.com/p/mppq"
 	"flag"
+	"github.com/phques/mppq"
 	"log"
 	"time"
 )
