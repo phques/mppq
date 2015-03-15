@@ -7,6 +7,7 @@ package mppq
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	//"fmt"
 	"log"
 	"net"
@@ -18,12 +19,12 @@ import (
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
 type Provider struct {
-	run        bool
-	udpConn    *net.UDPConn
-	Quit       chan bool
-	AddService chan ServiceDef
-	DelService chan ServiceDef
-	services   map[string]ServiceDef
+	run      bool
+	udpConn  *net.UDPConn
+	quit     chan bool
+	addSrvCh chan ServiceDef
+	delSrvCh chan ServiceDef
+	services map[string]ServiceDef
 }
 
 //---------
@@ -45,52 +46,26 @@ func openUdpConn() *net.UDPConn {
 func NewProvider() *Provider {
 	prov := new(Provider)
 	prov.run = false
-	prov.Quit = make(chan bool)
-	prov.AddService = make(chan ServiceDef)
-	prov.DelService = make(chan ServiceDef)
+	prov.quit = make(chan bool)
+	prov.addSrvCh = make(chan ServiceDef)
+	prov.delSrvCh = make(chan ServiceDef)
 	prov.services = make(map[string]ServiceDef)
 
 	return prov
 }
 
-func (prov *Provider) MarcoPoloLoop() {
-	// open udp connection
-	prov.udpConn = openUdpConn()
-	defer prov.udpConn.Close()
+func (prov *Provider) Start() {
+	// launch goroutine marcoPoloLoop
+	started := make(chan bool)
+	go prov.marcoPoloLoop(started)
 
-	udpChan := make(chan *UDPPacket)
-	go udpReadLoop(prov.udpConn, udpChan)
-
-	prov.run = true
-
-	var chanReadOk = true
-	for chanReadOk && prov.run {
-		select {
-		case _ = <-prov.Quit:
-			chanReadOk = false
-
-		case jsonAdd, chanReadOk := <-prov.AddService:
-			if chanReadOk {
-				prov.addService(jsonAdd)
-			}
-
-		case jsonDel, chanReadOk := <-prov.DelService:
-			if chanReadOk {
-				prov.delService(jsonDel)
-			}
-
-		case udpPacket, chanReadOk := <-udpChan:
-			if chanReadOk {
-				prov.processUdpPacket(udpPacket)
-			}
-		}
-	}
+	// wait for it to be ready before returning
+	<-started
 }
-
 func (prov *Provider) Stop() {
 	//if (!prov.stopped) {
 	prov.run = false
-	prov.Quit <- true
+	prov.quit <- true
 	//close(prov.Quit)
 	//}
 }
@@ -107,6 +82,22 @@ func (prov *Provider) Close() {
 		DelService chan ServiceDef
 		services   map[string]ServiceDef
 	*/
+}
+
+func (prov *Provider) AddService(service ServiceDef) error {
+	if !prov.run || prov.addSrvCh == nil {
+		return errors.New("AddService, Provider is not running / not initialized")
+	}
+	prov.addSrvCh <- service
+	return nil
+}
+
+func (prov *Provider) DelService(service ServiceDef) error {
+	if !prov.run || prov.delSrvCh == nil {
+		return errors.New("DelService, Provider is not running / not initialized")
+	}
+	prov.delSrvCh <- service
+	return nil
 }
 
 //------------
@@ -153,4 +144,41 @@ func (prov *Provider) processUdpPacket(packet *UDPPacket) {
 		log.Printf("error sending back udp response. ", err)
 	}
 
+}
+
+func (prov *Provider) marcoPoloLoop(started chan<- bool) {
+	// open udp connection
+	prov.udpConn = openUdpConn()
+	defer prov.udpConn.Close()
+
+	udpChan := make(chan *UDPPacket)
+	go udpReadLoop(prov.udpConn, udpChan)
+
+	prov.run = true
+
+	// signal that we are ready
+	started <- true
+
+	var chanReadOk = true
+	for chanReadOk && prov.run {
+		select {
+		case _ = <-prov.quit:
+			chanReadOk = false
+
+		case serviceAdd, chanReadOk := <-prov.addSrvCh:
+			if chanReadOk {
+				prov.addService(serviceAdd)
+			}
+
+		case serviceDel, chanReadOk := <-prov.delSrvCh:
+			if chanReadOk {
+				prov.delService(serviceDel)
+			}
+
+		case udpPacket, chanReadOk := <-udpChan:
+			if chanReadOk {
+				prov.processUdpPacket(udpPacket)
+			}
+		}
+	}
 }

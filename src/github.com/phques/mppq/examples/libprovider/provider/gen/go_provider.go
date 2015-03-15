@@ -9,6 +9,11 @@ import (
 	"golang.org/x/mobile/bind/seq"
 )
 
+func proxy_InitAppFilesDir(out, in *seq.Buffer) {
+	param_appFilesDir_ := in.ReadUTF16()
+	provider.InitAppFilesDir(param_appFilesDir_)
+}
+
 func proxy_Register(out, in *seq.Buffer) {
 	param_serviceName := in.ReadUTF16()
 	provider.Register(param_serviceName)
@@ -19,6 +24,7 @@ func proxy_Start(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register("provider", 1, proxy_Register)
-	seq.Register("provider", 2, proxy_Start)
+	seq.Register("provider", 1, proxy_InitAppFilesDir)
+	seq.Register("provider", 2, proxy_Register)
+	seq.Register("provider", 3, proxy_Start)
 }

@@ -1,0 +1,20 @@
+[
+    {   "Name" : "Music",
+        "Dirs"  : ["/storage/sdcard/Music"]
+    },
+    {   "Name" : "Downloads",
+        "Dirs"  : ["/storage/sdcard/Download"]
+    },
+    {   "Name" : "Documents",
+        "Dirs"  : ["/storage/sdcard/Documents"]
+    },
+    {   "Name" : "Pictures",
+        "Dirs"  : ["/storage/sdcard/Pictures"]
+    },
+    {   "Name" : "Movies",
+        "Dirs"  : ["/storage/sdcard/Movies"]
+    },
+    {   "Name" : "Books",
+        "Dirs"  : ["/storage/sdcard/Books"]
+    }
+]

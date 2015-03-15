@@ -15,16 +15,16 @@ func main() {
 
 	// start mppq provider
 	prov := mppq.NewProvider()
-	go prov.MarcoPoloLoop()
+	prov.Start()
 
 	// register a service (provider main loop must be running)
 	hostname, _ := os.Hostname()
-	prov.AddService <- mppq.ServiceDef{
+	prov.AddService(mppq.ServiceDef{
 		ServiceName:  "androidPush",
 		ProviderName: hostname,
 		HostPort:     1234,
 		Protocol:     "jsonrpc1",
-	}
+	})
 
 	// wait
 	select {}
