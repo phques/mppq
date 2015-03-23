@@ -16,6 +16,7 @@ const (
 )
 
 var (
+	initDone       bool = false
 	provider       *mppq.Provider
 	appFilesDir    string
 	configFilepath string
@@ -54,6 +55,16 @@ func Register(serviceName string) {
 // Initialize the app's files dir, copies config file there if 1st time
 // called from android app
 func InitAppFilesDir(appFilesDir_ string) {
+	// already done ?
+	if initDone {
+		return
+	}
+	initDone = true
+
+	//## debug
+	dir, _ := os.Getwd()
+	log.Printf("cwd: %v\n", dir)
+
 	appFilesDir = appFilesDir_
 
 	// setup config file path

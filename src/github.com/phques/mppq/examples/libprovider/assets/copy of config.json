@@ -1,0 +1,20 @@
+[
+    {   "Name" : "Music",
+        "Dirs"  : ["/home/kwez/Music"]
+    },
+    {   "Name" : "Downloads",
+        "Dirs"  : ["/home/kwez/Downloads"]
+    },
+    {   "Name" : "Pictures",
+        "Dirs"  : ["/home/kwez/Pictures"]
+    },
+    {   "Name" : "Movies",
+        "Dirs"  : ["/home/kwez/Videos"]
+    },
+    {   "Name" : "Documents",
+        "Dirs"  : ["/home/kwez/Documents"]
+    },
+    {   "Name" : "Books",
+        "Dirs"  : ["/home/kwez/Books"]
+    }
+]
