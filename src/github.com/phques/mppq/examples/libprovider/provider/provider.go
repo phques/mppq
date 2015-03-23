@@ -16,26 +16,33 @@ const (
 )
 
 var (
-	initDone       bool = false
-	provider       *mppq.Provider
+	initDone bool = false
+	provider *mppq.Provider
+
 	appFilesDir    string
 	configFilepath string
 )
 
 //------
 
-// called in main, through app.Run(Start callback)
-func Start() {
+//
+func Start() error {
 
 	log.Println("provider.Start")
+
+	// start http server
+	if err := StartHTTP(); err != nil {
+		return err
+	}
 
 	// create/start mppq provider
 	provider = mppq.NewProvider()
 	provider.Start()
 
+	return nil
 }
 
-// called in main, through app.Run(Start callback)
+//
 func Register(serviceName string) {
 
 	log.Println("provider.Register", serviceName)
@@ -45,8 +52,8 @@ func Register(serviceName string) {
 	provider.AddService(mppq.ServiceDef{
 		ServiceName:  serviceName,
 		ProviderName: hostname,
-		HostPort:     1234,
-		Protocol:     "jsonrpc1",
+		HostPort:     httpListenPort,
+		Protocol:     "jsonhttp",
 	})
 }
 

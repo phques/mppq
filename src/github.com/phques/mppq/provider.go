@@ -62,6 +62,7 @@ func (prov *Provider) Start() {
 	// wait for it to be ready before returning
 	<-started
 }
+
 func (prov *Provider) Stop() {
 	//if (!prov.stopped) {
 	prov.run = false
