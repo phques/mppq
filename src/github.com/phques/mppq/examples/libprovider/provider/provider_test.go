@@ -6,5 +6,7 @@ import (
 )
 
 func TestInitAppFilesDir(t *testing.T) {
-	InitAppFilesDir("files")
+	if err := InitAppFilesDir("files"); err != nil {
+		t.Error(err)
+	}
 }

@@ -29,16 +29,16 @@ type Provider struct {
 
 //---------
 
-func openUdpConn() *net.UDPConn {
+func openUdpConn() (*net.UDPConn, error) {
 	// open listen connection on default system interface
 	// NB: on Win8/8.1, we *can* use multicast to listen,
 	//     it will work if we *send broadcast* !
 	udpConn, err := net.ListenMulticastUDP("udp4", nil, &multicastUdpAddr)
 	if err != nil {
-		log.Fatal("failed to open multicast udp listen connection. ", err)
+		log.Println("failed to open multicast udp listen connection. ", err)
 	}
 
-	return udpConn
+	return udpConn, err
 }
 
 //---------------
@@ -54,13 +54,21 @@ func NewProvider() *Provider {
 	return prov
 }
 
-func (prov *Provider) Start() {
-	// launch goroutine marcoPoloLoop
+func (prov *Provider) Start() error {
+	// open udp connection
+	conn, err := openUdpConn()
+	if err != nil {
+		return err
+	}
+
+	// launch goroutine marcoPoloLoop, will close prov.udpConn
 	started := make(chan bool)
-	go prov.marcoPoloLoop(started)
+	prov.udpConn = conn
+	go prov.marcoPoloLoop(conn, started)
 
 	// wait for it to be ready before returning
 	<-started
+	return nil
 }
 
 func (prov *Provider) Stop() {
@@ -147,9 +155,9 @@ func (prov *Provider) processUdpPacket(packet *UDPPacket) {
 
 }
 
-func (prov *Provider) marcoPoloLoop(started chan<- bool) {
-	// open udp connection
-	prov.udpConn = openUdpConn()
+// main loop (goroutine)
+// will close conn
+func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 	defer prov.udpConn.Close()
 
 	udpChan := make(chan *UDPPacket)

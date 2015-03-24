@@ -25,7 +25,6 @@ func start() {
 	if *standalone {
 		provider.InitAppFilesDir("files")
 		provider.Start()
-		provider.Register("androidPush")
 	}
 }
 

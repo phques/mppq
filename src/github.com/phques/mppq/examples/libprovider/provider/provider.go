@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	initDone bool = false
-	provider *mppq.Provider
+	initDone     bool = false
+	mppqProvider *mppq.Provider
 
 	appFilesDir    string
 	configFilepath string
@@ -25,7 +25,8 @@ var (
 
 //------
 
-//
+// Start http, mppq servers, registers androidPush with mppq
+// nb: InitAppFilesDir should be called 1st
 func Start() error {
 
 	log.Println("provider.Start")
@@ -36,35 +37,24 @@ func Start() error {
 	}
 
 	// create/start mppq provider
-	provider = mppq.NewProvider()
-	provider.Start()
+	mppqProvider = mppq.NewProvider()
+	err := mppqProvider.Start()
+	if err != nil {
+		return err
+	}
+
+	// register androidPush
+	registerMppqService("androidPush")
 
 	return nil
 }
 
-//
-func Register(serviceName string) {
-
-	log.Println("provider.Register", serviceName)
-
-	// register a service (provider main loop must be running)
-	hostname, _ := os.Hostname() // returns 'localhost' on my Nexus 7
-	provider.AddService(mppq.ServiceDef{
-		ServiceName:  serviceName,
-		ProviderName: hostname,
-		HostPort:     httpListenPort,
-		Protocol:     "jsonhttp",
-	})
-}
-
-//------- methods for Android App -----
-
 // Initialize the app's files dir, copies config file there if 1st time
 // called from android app
-func InitAppFilesDir(appFilesDir_ string) {
+func InitAppFilesDir(appFilesDir_ string) error {
 	// already done ?
 	if initDone {
-		return
+		return nil
 	}
 	initDone = true
 
@@ -81,14 +71,16 @@ func InitAppFilesDir(appFilesDir_ string) {
 	// create initial (copy from assets) config.json in appFilesDir if does not exists
 	// does config file exist in app files dir?
 	if _, err := os.Stat(configFilepath); err != nil {
-		copyConfigFile()
+		return copyConfigFile()
 	}
+
+	return nil
 }
 
 //--- utils -----
 
 // copy config file from assets to app filesdir
-func copyConfigFile() {
+func copyConfigFile() (err error) {
 	// open src config file from assets
 	srcFile, err := app.Open(configFilename)
 	if err != nil {
@@ -112,4 +104,22 @@ func copyConfigFile() {
 	} else {
 		log.Printf("copyConfigFile, error copying : %v\n", err)
 	}
+
+	return nil
+}
+
+// register a service we provide with mppq
+func registerMppqService(serviceName string) {
+
+	log.Println("registerMppqService", serviceName)
+
+	// register a service (mppqProvider must be started)
+	//## PQ use 'deviceName' from config
+	providerName, _ := os.Hostname() // returns 'localhost' on my Nexus 7
+	mppqProvider.AddService(mppq.ServiceDef{
+		ServiceName:  serviceName,
+		ProviderName: providerName,
+		HostPort:     httpListenPort,
+		Protocol:     "jsonhttp",
+	})
 }

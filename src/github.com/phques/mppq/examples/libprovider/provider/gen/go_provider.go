@@ -11,20 +11,34 @@ import (
 
 func proxy_InitAppFilesDir(out, in *seq.Buffer) {
 	param_appFilesDir_ := in.ReadUTF16()
-	provider.InitAppFilesDir(param_appFilesDir_)
-}
-
-func proxy_Register(out, in *seq.Buffer) {
-	param_serviceName := in.ReadUTF16()
-	provider.Register(param_serviceName)
+	err := provider.InitAppFilesDir(param_appFilesDir_)
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
 }
 
 func proxy_Start(out, in *seq.Buffer) {
-	provider.Start()
+	err := provider.Start()
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
+}
+
+func proxy_StartHTTP(out, in *seq.Buffer) {
+	err := provider.StartHTTP()
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
 }
 
 func init() {
 	seq.Register("provider", 1, proxy_InitAppFilesDir)
-	seq.Register("provider", 2, proxy_Register)
-	seq.Register("provider", 3, proxy_Start)
+	seq.Register("provider", 2, proxy_Start)
+	seq.Register("provider", 3, proxy_StartHTTP)
 }
