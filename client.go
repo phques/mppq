@@ -12,65 +12,70 @@ import (
 	"time"
 )
 
-type Client struct {
+// query holds the info required to execute a service query
+type query struct {
 	name         string
 	waitFor      time.Duration
 	useBroadcast bool
-
-	udpConn     *net.UDPConn // created/opened only during query func
-	serviceDefs []ServiceDef
 }
 
 //----------
 
+// QueryService sends a 'whosthere' for service name,
+// returns array of found SerfviceDefs
 func QueryService(name string, waitFor time.Duration, useBroadcast bool) ([]ServiceDef, error) {
 	log.Printf("dbg QueryService useBroadcast = %v\n", useBroadcast)
 
 	// create Client object
-	client := &Client{name: name, waitFor: waitFor, useBroadcast: useBroadcast}
+	q := &query{name: name, waitFor: waitFor, useBroadcast: useBroadcast}
 
-	if err := client.doQuery(); err != nil {
+	serviceDefs, err := q.doQuery()
+	if err != nil {
 		return nil, err
 	}
 
-	return client.serviceDefs, nil
+	return serviceDefs, nil
 }
 
 //------------
 
-func (client *Client) doQuery() error {
+// doQuery sends a 'whosthere' for service name,
+// returns array of found SerfviceDefs
+func (q *query) doQuery() ([]ServiceDef, error) {
 
 	// open udp connection (any local address & port)
 	var err error
 	localUdpAddr := net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
+	udpConn, err := net.ListenUDP("udp4", &localUdpAddr)
 
-	client.udpConn, err = net.ListenUDP("udp4", &localUdpAddr)
 	if err != nil {
 		log.Println("failed to open local udp connection. ", err)
-		return err
+		return nil, err
 	}
-	defer client.udpConn.Close()
+	defer udpConn.Close()
 
 	// prep channel to recv messages from udp loop
 	// & start udp read loop
 	msgChan := make(chan *UDPPacket)
-	go udpReadLoop(client.udpConn, msgChan)
+	//nb: will stop when udpConn is closed
+	go udpReadLoop(udpConn, msgChan)
 
 	// send query !
-	query := whosthereStr + client.name
-	if client.useBroadcast {
+	query := whosthereStr + q.name
+	if q.useBroadcast {
 		//## for Window8/8.1, cant recv multicast, send broadcast
-		client.udpConn.WriteToUDP([]byte(query), &broadcastUdpAddr)
+		udpConn.WriteToUDP([]byte(query), &broadcastUdpAddr)
 	} else {
 		// multicast
-		client.udpConn.WriteToUDP([]byte(query), &multicastUdpAddr)
+		udpConn.WriteToUDP([]byte(query), &multicastUdpAddr)
 	}
 
 	// loop until timeout, gathering recvd ServiceDef
 	//##PQ TODO: should resend query every 1sec or something ! (?)
 	//## but then we would recv multiple entries from same services !
 	//## just let user call it multiple time to handle this !
-	timer := time.NewTimer(client.waitFor)
+	var serviceDefs []ServiceDef
+	timer := time.NewTimer(q.waitFor)
 	done := false
 	for !done {
 		select {
@@ -80,22 +85,26 @@ func (client *Client) doQuery() error {
 
 		case udpPacket := <-msgChan:
 			// received udp reponse packet, processs it
-			client.processUdpPacket(udpPacket)
+			serviceDef := q.processUdpPacket(udpPacket)
+			if serviceDef != nil {
+				serviceDefs = append(serviceDefs, *serviceDef)
+			}
 		}
 	}
 
 	// client.udpConn will close on return, so udpReadLoop() will stop
-	return nil
+	return serviceDefs, nil
 }
 
-func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
+// processUdpPacket
+func (q *query) processUdpPacket(udpPacket *UDPPacket) *ServiceDef {
 	log.Printf("recvd response [%s]", udpPacket.data)
 
 	// did we receive a whosthere mppq query ?
 	if !bytes.HasPrefix(udpPacket.data, []byte(ImhereStr)) {
 		// debug (hmm, not a good idea too output received unknown data ! ;-p)
 		log.Printf("received unknown response")
-		return
+		return nil
 	}
 
 	// get serviceDef parameter of Imhere! "Imhere!serviceDefJson"
@@ -104,13 +113,13 @@ func (client *Client) processUdpPacket(udpPacket *UDPPacket) {
 	// decode json ServiceDef response
 	var serviceDef ServiceDef
 	if err := json.Unmarshal(serviceDefJson, &serviceDef); err != nil {
-		log.Printf("error decoding json ServiceDef response. ", err)
-		return
+		log.Println("error decoding json ServiceDef response. ", err)
+		return nil
 	}
 
 	// add the remote udp address, taken from udpPacket
 	remIP := udpPacket.remoteAddr.IP
 	serviceDef.RemoteIP = &remIP
 
-	client.serviceDefs = append(client.serviceDefs, serviceDef)
+	return &serviceDef
 }

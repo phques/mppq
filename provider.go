@@ -150,7 +150,7 @@ func (prov *Provider) processUdpPacket(packet *UDPPacket) {
 	// send back json response to udp sender
 	response := []byte(ImhereStr + string(jsonmsg))
 	if _, err := prov.udpConn.WriteToUDP(response, packet.remoteAddr); err != nil {
-		log.Printf("error sending back udp response. ", err)
+		log.Println("error sending back udp response. ", err)
 	}
 
 }

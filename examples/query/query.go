@@ -31,4 +31,7 @@ func main() {
 	for _, sdef := range serviceDefs {
 		log.Printf("%v\n", sdef)
 	}
+
+	//## test debug
+	time.Sleep(700 * time.Millisecond)
 }

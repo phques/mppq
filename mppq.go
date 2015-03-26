@@ -59,8 +59,12 @@ func udpReadLoop(conn *net.UDPConn, msgChan chan *UDPPacket) {
 	// wait for msg, send it on channel
 	data := make([]byte, 4*1024)
 	for {
-		//fmt.Println("wait for msg")
+		// can't know if err is caused by closed connection (?)
 		nbRead, remoteAddr, err := conn.ReadFromUDP(data)
+
+		//## debug
+		log.Printf("udpReadLoop, %v, %v, %v", nbRead, remoteAddr, err)
+
 		if err != nil {
 			log.Print("error reading udp socket. ", err)
 			return
