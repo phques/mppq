@@ -53,8 +53,9 @@ type UDPPacket struct {
 //------------
 
 // waits for incoming UDP message/data
-// sends it on msgChan
-func udpReadLoop(conn *net.UDPConn, msgChan chan *UDPPacket) {
+// sends it on msgChan,
+// send a value to stopChan before closing conn (stopChan should be buffered so we can use len())
+func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, stopChan <-chan bool) {
 
 	// wait for msg, send it on channel
 	data := make([]byte, 4*1024)
@@ -62,11 +63,15 @@ func udpReadLoop(conn *net.UDPConn, msgChan chan *UDPPacket) {
 		// can't know if err is caused by closed connection (?)
 		nbRead, remoteAddr, err := conn.ReadFromUDP(data)
 
-		//## debug
-		log.Printf("udpReadLoop, %v, %v, %v", nbRead, remoteAddr, err)
-
 		if err != nil {
-			log.Print("error reading udp socket. ", err)
+			// if we get a value on stopChan we'll assume that the connection was closed
+			lenChan := len(stopChan)
+			if lenChan > 0 {
+				// ok, dont display error, we were asked to stop
+				return
+			}
+			// nothing on stop channel, display error before quiting
+			log.Print("udpReadLoop, error reading udp socket. ", err)
 			return
 		}
 

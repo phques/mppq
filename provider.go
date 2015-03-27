@@ -19,8 +19,8 @@ import (
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
 type Provider struct {
-	run      bool
-	udpConn  *net.UDPConn
+	run bool
+	//udpConn  *net.UDPConn
 	quit     chan bool
 	addSrvCh chan ServiceDef
 	delSrvCh chan ServiceDef
@@ -63,7 +63,7 @@ func (prov *Provider) Start() error {
 
 	// launch goroutine marcoPoloLoop, will close prov.udpConn
 	started := make(chan bool)
-	prov.udpConn = conn
+	//prov.udpConn = conn
 	go prov.marcoPoloLoop(conn, started)
 
 	// wait for it to be ready before returning
@@ -119,7 +119,7 @@ func (prov *Provider) delService(service ServiceDef) {
 	delete(prov.services, service.ServiceName)
 }
 
-func (prov *Provider) processUdpPacket(packet *UDPPacket) {
+func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 
 	// did we receive a whosthere mppq query ?
 	if !bytes.HasPrefix(packet.data, []byte(whosthereStr)) {
@@ -149,7 +149,8 @@ func (prov *Provider) processUdpPacket(packet *UDPPacket) {
 
 	// send back json response to udp sender
 	response := []byte(ImhereStr + string(jsonmsg))
-	if _, err := prov.udpConn.WriteToUDP(response, packet.remoteAddr); err != nil {
+	//	if _, err := prov.udpConn.WriteToUDP(response, packet.remoteAddr); err != nil {
+	if _, err := conn.WriteToUDP(response, packet.remoteAddr); err != nil {
 		log.Println("error sending back udp response. ", err)
 	}
 
@@ -158,10 +159,13 @@ func (prov *Provider) processUdpPacket(packet *UDPPacket) {
 // main loop (goroutine)
 // will close conn
 func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
-	defer prov.udpConn.Close()
+	//defer prov.udpConn.Close()
+	defer conn.Close()
 
 	udpChan := make(chan *UDPPacket)
-	go udpReadLoop(prov.udpConn, udpChan)
+	stopChan := make(chan bool, 1)
+	go udpReadLoop(conn, udpChan, stopChan)
+	//	go udpReadLoop(prov.udpConn, udpChan, stopChan)
 
 	prov.run = true
 
@@ -186,7 +190,7 @@ func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 
 		case udpPacket, chanReadOk := <-udpChan:
 			if chanReadOk {
-				prov.processUdpPacket(udpPacket)
+				prov.processUdpPacket(conn, udpPacket)
 			}
 		}
 	}

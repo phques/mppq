@@ -57,8 +57,9 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	// prep channel to recv messages from udp loop
 	// & start udp read loop
 	msgChan := make(chan *UDPPacket)
+	stopChan := make(chan bool, 1)
 	//nb: will stop when udpConn is closed
-	go udpReadLoop(udpConn, msgChan)
+	go udpReadLoop(udpConn, msgChan, stopChan)
 
 	// send query !
 	query := whosthereStr + q.name
@@ -93,6 +94,7 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	}
 
 	// client.udpConn will close on return, so udpReadLoop() will stop
+	stopChan <- true // signal that we have closed conn / stopping
 	return serviceDefs, nil
 }
 
