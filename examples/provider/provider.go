@@ -5,13 +5,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/phques/mppq"
 	"os"
+
+	"github.com/phques/mppq"
 )
 
 func main() {
 
-	fmt.Println("Hello World!")
+	fmt.Println("Starting provider!")
 
 	// start mppq provider
 	prov := mppq.NewProvider()
@@ -26,6 +27,10 @@ func main() {
 		Protocol:     "jsonrpc1",
 	})
 
-	// wait
+	//test,  wait
 	select {}
+
+	//	time.Sleep(1500 * time.Millisecond)
+	//	prov.Stop()
+	//	time.Sleep(1500 * time.Millisecond)
 }

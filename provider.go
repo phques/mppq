@@ -61,9 +61,8 @@ func (prov *Provider) Start() error {
 		return err
 	}
 
-	// launch goroutine marcoPoloLoop, will close prov.udpConn
+	// launch goroutine marcoPoloLoop, will close conn
 	started := make(chan bool)
-	//prov.udpConn = conn
 	go prov.marcoPoloLoop(conn, started)
 
 	// wait for it to be ready before returning
@@ -77,20 +76,6 @@ func (prov *Provider) Stop() {
 	prov.quit <- true
 	//close(prov.Quit)
 	//}
-}
-
-func (prov *Provider) Close() {
-	prov.Stop()
-
-	// prov.udpconn closed by defer in MarcoPoloLoop
-	/*
-		stopped    bool
-		udpConn    *net.UDPConn
-		Quit       chan bool
-		AddService chan ServiceDef
-		DelService chan ServiceDef
-		services   map[string]ServiceDef
-	*/
 }
 
 func (prov *Provider) AddService(service ServiceDef) error {
@@ -149,7 +134,6 @@ func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 
 	// send back json response to udp sender
 	response := []byte(ImhereStr + string(jsonmsg))
-	//	if _, err := prov.udpConn.WriteToUDP(response, packet.remoteAddr); err != nil {
 	if _, err := conn.WriteToUDP(response, packet.remoteAddr); err != nil {
 		log.Println("error sending back udp response. ", err)
 	}
@@ -157,26 +141,25 @@ func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 }
 
 // main loop (goroutine)
-// will close conn
+// will close conn on exit
 func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
-	//defer prov.udpConn.Close()
 	defer conn.Close()
 
 	udpChan := make(chan *UDPPacket)
 	stopChan := make(chan bool, 1)
 	go udpReadLoop(conn, udpChan, stopChan)
-	//	go udpReadLoop(prov.udpConn, udpChan, stopChan)
-
-	prov.run = true
 
 	// signal that we are ready
+	prov.run = true
 	started <- true
 
 	var chanReadOk = true
 	for chanReadOk && prov.run {
 		select {
 		case _ = <-prov.quit:
+			log.Println("marcoPoloLoop recvd quit")
 			chanReadOk = false
+			stopChan <- true
 
 		case serviceAdd, chanReadOk := <-prov.addSrvCh:
 			if chanReadOk {
