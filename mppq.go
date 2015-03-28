@@ -33,18 +33,18 @@ func init() {
 
 //---------
 
+// ServiceDef describes a service the provider offers.
 // this is what we answer back from a 'whos there' msg
-// nb: caller should get our IP from the returned udp packet
 type ServiceDef struct {
-	ServiceName  string
-	ProviderName string
-	HostPort     int
-	Protocol     string // ie "jsonrpcv1"
+	ServiceName  string // the name of the service provided
+	ProviderName string // the name of the provider
+	HostPort     int    // port on which the service is available
+	Protocol     string // app arbitrary protocol name, ie "jsonrpcv1"
 	// filled by Client lib when recving response from query
 	RemoteIP *net.IP `json:"RemoteIP,omitempty"`
 }
 
-// holds the data / remote address when a udp msg is received
+// UDPPacket holds the data & remote address of a received udp msg
 type UDPPacket struct {
 	remoteAddr *net.UDPAddr
 	data       []byte
@@ -52,9 +52,9 @@ type UDPPacket struct {
 
 //------------
 
-// waits for incoming UDP message/data
-// sends it on msgChan,
-// send a value to stopChan before closing conn
+// udpReadLoop waits for incoming UDP message/data
+// and sends it on msgChan.
+// Close conn to stop, send a value to stopChan before though!
 // (stopChan should be buffered so we can use len())
 func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, stopChan <-chan bool) {
 
@@ -93,6 +93,5 @@ func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, stopChan <-chan b
 
 		// send it on the channel
 		msgChan <- udpPacket
-
 	}
 }

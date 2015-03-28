@@ -43,6 +43,7 @@ func openUdpConn() (*net.UDPConn, error) {
 
 //---------------
 
+// NewProvider creates a new Provider
 func NewProvider() *Provider {
 	prov := new(Provider)
 	prov.run = false
@@ -54,6 +55,7 @@ func NewProvider() *Provider {
 	return prov
 }
 
+// Start opens a UDP connection and starts the 'marcoPolo' loop listening for queries
 func (prov *Provider) Start() error {
 	// open udp connection
 	conn, err := openUdpConn()
@@ -70,6 +72,7 @@ func (prov *Provider) Start() error {
 	return nil
 }
 
+// Stop signals the provider to stop running / listening for queries
 func (prov *Provider) Stop() {
 	//if (!prov.stopped) {
 	prov.run = false
@@ -78,6 +81,8 @@ func (prov *Provider) Stop() {
 	//}
 }
 
+// AddService adds a known service to the provider
+//nb: provider must be Start)ed
 func (prov *Provider) AddService(service ServiceDef) error {
 	if !prov.run || prov.addSrvCh == nil {
 		return errors.New("AddService, Provider is not running / not initialized")
@@ -86,6 +91,8 @@ func (prov *Provider) AddService(service ServiceDef) error {
 	return nil
 }
 
+// DelService removes a known service from the provider
+//nb: provider must be Start)ed
 func (prov *Provider) DelService(service ServiceDef) error {
 	if !prov.run || prov.delSrvCh == nil {
 		return errors.New("DelService, Provider is not running / not initialized")
@@ -140,8 +147,9 @@ func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 
 }
 
-// main loop (goroutine)
-// will close conn on exit
+// main loop (goroutine), will close conn on exit
+// waits for add/del service commands and
+// for data (mppq serfvice queries) from the UDP conn
 func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 	defer conn.Close()
 
