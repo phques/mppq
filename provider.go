@@ -19,8 +19,7 @@ import (
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
 type Provider struct {
-	run bool
-	//udpConn  *net.UDPConn
+	run      bool
 	quit     chan bool
 	addSrvCh chan ServiceDef
 	delSrvCh chan ServiceDef
@@ -72,20 +71,27 @@ func (prov *Provider) Start() error {
 	return nil
 }
 
+// IsRunning returns true if the provider was started
+func (prov *Provider) IsRunning() bool {
+	return prov.run && prov.quit != nil
+}
+
 // Stop signals the provider to stop running / listening for queries
-func (prov *Provider) Stop() {
-	//if (!prov.stopped) {
+func (prov *Provider) Stop() error {
+	if !prov.IsRunning() {
+		return errors.New("Stop, Provider is not running")
+	}
+
 	prov.run = false
 	prov.quit <- true
-	//close(prov.Quit)
-	//}
+	return nil
 }
 
 // AddService adds a known service to the provider
 //nb: provider must be Start)ed
 func (prov *Provider) AddService(service ServiceDef) error {
 	if !prov.run || prov.addSrvCh == nil {
-		return errors.New("AddService, Provider is not running / not initialized")
+		return errors.New("AddService, Provider is not running")
 	}
 	prov.addSrvCh <- service
 	return nil
