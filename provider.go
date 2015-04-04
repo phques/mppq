@@ -20,7 +20,7 @@ import (
 // answering with info about service if we match the queried service
 type Provider struct {
 	run      bool
-	quit     chan bool
+	quit     chan struct{}
 	addSrvCh chan ServiceDef
 	delSrvCh chan ServiceDef
 	services map[string]ServiceDef
@@ -46,7 +46,7 @@ func openUdpConn() (*net.UDPConn, error) {
 func NewProvider() *Provider {
 	prov := new(Provider)
 	prov.run = false
-	prov.quit = make(chan bool)
+	prov.quit = make(chan struct{})
 	prov.addSrvCh = make(chan ServiceDef)
 	prov.delSrvCh = make(chan ServiceDef)
 	prov.services = make(map[string]ServiceDef)
@@ -83,7 +83,7 @@ func (prov *Provider) Stop() error {
 	}
 
 	prov.run = false
-	prov.quit <- true
+	close(prov.quit)
 	return nil
 }
 
@@ -160,8 +160,8 @@ func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 	defer conn.Close()
 
 	udpChan := make(chan *UDPPacket)
-	stopChan := make(chan bool, 1)
-	go udpReadLoop(conn, udpChan, stopChan)
+	quitChan := make(chan struct{})
+	go udpReadLoop(conn, udpChan, quitChan)
 
 	// signal that we are ready
 	prov.run = true
@@ -173,7 +173,7 @@ func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 		case _ = <-prov.quit:
 			log.Println("marcoPoloLoop recvd quit")
 			chanReadOk = false
-			stopChan <- true
+			close(quitChan)
 
 		case serviceAdd, chanReadOk := <-prov.addSrvCh:
 			if chanReadOk {

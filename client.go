@@ -57,7 +57,7 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	// prep channel to recv messages from udp loop
 	// & start udp read loop
 	msgChan := make(chan *UDPPacket)
-	quitChan := make(chan bool)
+	quitChan := make(chan struct{})
 	//nb: will stop when udpConn is closed
 	go udpReadLoop(udpConn, msgChan, quitChan)
 

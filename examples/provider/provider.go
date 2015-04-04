@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/phques/mppq"
 )
@@ -28,9 +29,11 @@ func main() {
 	})
 
 	//test,  wait
-	select {}
+	//	select {}
 
-	//	time.Sleep(1500 * time.Millisecond)
-	//	prov.Stop()
-	//	time.Sleep(1500 * time.Millisecond)
+	delay := time.Second * 5
+	fmt.Println("providing for", delay)
+	time.Sleep(delay)
+	prov.Stop()
+	time.Sleep(1500 * time.Millisecond)
 }

@@ -55,7 +55,7 @@ type UDPPacket struct {
 // udpReadLoop waits for incoming UDP message/data
 // and sends it on msgChan.
 // Close conn to stop, close quitChan before though!
-func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan bool) {
+func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan struct{}) {
 
 	// wait for msg, send it on channel
 	data := make([]byte, 4*1024)
@@ -63,7 +63,7 @@ func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan b
 		// check if we were asked to quit
 		select {
 		case <-quitChan:
-			log.Println("udpReadLoop recvd stop")
+			log.Println("udpReadLoop recvd quit")
 			return
 		default:
 		}
@@ -76,7 +76,7 @@ func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan b
 			select {
 			case <-quitChan:
 				// ok, dont display error, we were asked to stop
-				log.Println("udpReadLoop recvd stop")
+				log.Println("udpReadLoop recvd quit (conn closed)")
 				return
 			default:
 				// nothing on quit channel, display error before quiting
