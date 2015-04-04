@@ -54,33 +54,35 @@ type UDPPacket struct {
 
 // udpReadLoop waits for incoming UDP message/data
 // and sends it on msgChan.
-// Close conn to stop, send a value to stopChan before though!
-// (stopChan should be buffered so we can use len())
-func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, stopChan <-chan bool) {
+// Close conn to stop, close quitChan before though!
+func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan bool) {
 
 	// wait for msg, send it on channel
 	data := make([]byte, 4*1024)
 	for {
+		// check if we were asked to quit
+		select {
+		case <-quitChan:
+			log.Println("udpReadLoop recvd stop")
+			return
+		default:
+		}
+
+		// read from UDP connection
 		// can't know if err is caused by closed connection (?)
 		nbRead, remoteAddr, err := conn.ReadFromUDP(data)
 
 		if err != nil {
-			//## test debug, could we use info from *net.OpError to detect?
-			//operr := err.(*net.OpError)
-			//log.Println(operr.Err, operr.Net, operr.Op, operr.Temporary(), operr.Timeout())
-
-			// use the extra param stopChan to detect that we want to stop / closed the connection
-			// if we get a value on stopChan we'll assume that the connection was closed
-			lenChan := len(stopChan)
-			if lenChan > 0 {
+			select {
+			case <-quitChan:
 				// ok, dont display error, we were asked to stop
 				log.Println("udpReadLoop recvd stop")
 				return
+			default:
+				// nothing on quit channel, display error before quiting
+				log.Print("udpReadLoop, error reading udp socket. ", err)
+				return
 			}
-
-			// nothing on stop channel, display error before quiting
-			log.Print("udpReadLoop, error reading udp socket. ", err)
-			return
 		}
 
 		// create new *copy* array/slice of proper length = nb bytes nbRead

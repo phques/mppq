@@ -57,9 +57,9 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	// prep channel to recv messages from udp loop
 	// & start udp read loop
 	msgChan := make(chan *UDPPacket)
-	stopChan := make(chan bool, 1)
+	quitChan := make(chan bool)
 	//nb: will stop when udpConn is closed
-	go udpReadLoop(udpConn, msgChan, stopChan)
+	go udpReadLoop(udpConn, msgChan, quitChan)
 
 	// send query !
 	query := whosthereStr + q.name
@@ -76,11 +76,10 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	//## but then we would recv multiple entries from same services !
 	//## just let user call it multiple time to handle this !
 	var serviceDefs []ServiceDef
-	timer := time.NewTimer(q.waitFor)
 	done := false
 	for !done {
 		select {
-		case <-timer.C:
+		case <-time.After(q.waitFor):
 			// time is over, we're done
 			done = true
 
@@ -94,7 +93,7 @@ func (q *query) doQuery() ([]ServiceDef, error) {
 	}
 
 	// client.udpConn will close on return, so udpReadLoop() will stop
-	stopChan <- true // signal that we have closed conn / stopping
+	close(quitChan) // signal that we have closed conn / stopping
 	return serviceDefs, nil
 }
 
