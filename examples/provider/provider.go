@@ -31,7 +31,7 @@ func main() {
 	//test,  wait
 	//	select {}
 
-	delay := time.Second * 5
+	delay := time.Second * 10
 	fmt.Println("providing for", delay)
 	time.Sleep(delay)
 	prov.Stop()
