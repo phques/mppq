@@ -19,7 +19,6 @@ import (
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
 type Provider struct {
-	run      bool
 	quit     chan struct{}
 	addSrvCh chan ServiceDef
 	delSrvCh chan ServiceDef
@@ -45,7 +44,6 @@ func openUdpConn() (*net.UDPConn, error) {
 // NewProvider creates a new Provider
 func NewProvider() *Provider {
 	prov := new(Provider)
-	prov.run = false
 	prov.quit = make(chan struct{})
 	prov.addSrvCh = make(chan ServiceDef)
 	prov.delSrvCh = make(chan ServiceDef)
@@ -73,7 +71,16 @@ func (prov *Provider) Start() error {
 
 // IsRunning returns true if the provider was started
 func (prov *Provider) IsRunning() bool {
-	return prov.run && prov.quit != nil
+	if prov.quit == nil {
+		return false
+	}
+
+	select {
+	case <-prov.quit:
+		return false
+	default:
+		return true
+	}
 }
 
 // Stop signals the provider to stop running / listening for queries
@@ -82,7 +89,6 @@ func (prov *Provider) Stop() error {
 		return errors.New("Stop, Provider is not running")
 	}
 
-	prov.run = false
 	close(prov.quit)
 	return nil
 }
@@ -90,7 +96,7 @@ func (prov *Provider) Stop() error {
 // AddService adds a known service to the provider
 //nb: provider must be Start)ed
 func (prov *Provider) AddService(service ServiceDef) error {
-	if !prov.run || prov.addSrvCh == nil {
+	if !prov.IsRunning() {
 		return errors.New("AddService, Provider is not running")
 	}
 	prov.addSrvCh <- service
@@ -100,7 +106,7 @@ func (prov *Provider) AddService(service ServiceDef) error {
 // DelService removes a known service from the provider
 //nb: provider must be Start)ed
 func (prov *Provider) DelService(service ServiceDef) error {
-	if !prov.run || prov.delSrvCh == nil {
+	if !prov.IsRunning() {
 		return errors.New("DelService, Provider is not running / not initialized")
 	}
 	prov.delSrvCh <- service
@@ -164,11 +170,10 @@ func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 	go udpReadLoop(conn, udpChan, quitChan)
 
 	// signal that we are ready
-	prov.run = true
 	started <- true
 
 	var chanReadOk = true
-	for chanReadOk && prov.run {
+	for chanReadOk {
 		select {
 		case _ = <-prov.quit:
 			log.Println("marcoPoloLoop recvd quit")
