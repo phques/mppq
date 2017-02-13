@@ -18,7 +18,14 @@ import (
 // a marcopolopq provider,
 // listens on udp for 'whosthere' msgs,
 // answering with info about service if we match the queried service
-type Provider struct {
+type Provider interface {
+	IsRunning() bool
+	Stop() error
+	AddService(service ServiceDef) error
+	DelService(service ServiceDef) error
+}
+
+type provider struct {
 	quit     chan struct{}
 	addSrvCh chan ServiceDef
 	delSrvCh chan ServiceDef
@@ -41,19 +48,70 @@ func openUdpConn() (*net.UDPConn, error) {
 
 //---------------
 
-// NewProvider creates a new Provider
-func NewProvider() *Provider {
-	prov := new(Provider)
+// NewProvider creates and starts a new Provider
+func NewProvider() (Provider, error) {
+	prov := new(provider)
 	prov.quit = make(chan struct{})
 	prov.addSrvCh = make(chan ServiceDef)
 	prov.delSrvCh = make(chan ServiceDef)
 	prov.services = make(map[string]ServiceDef)
 
-	return prov
+	err := prov.start()
+	if err != nil {
+		return nil, err
+	}
+
+	return prov, nil
 }
 
+// IsRunning returns true if the provider was started
+func (prov *provider) IsRunning() bool {
+	if prov.quit == nil {
+		return false
+	}
+
+	select {
+	case <-prov.quit:
+		return false
+	default:
+		return true
+	}
+}
+
+// Stop signals the provider to stop running / listening for queries
+func (prov *provider) Stop() error {
+	if !prov.IsRunning() {
+		return errors.New("Stop, Provider is not running")
+	}
+
+	close(prov.quit)
+	return nil
+}
+
+// AddService adds a known service to the provider
+//nb: provider must be Start)ed
+func (prov *provider) AddService(service ServiceDef) error {
+	if !prov.IsRunning() {
+		return errors.New("AddService, Provider is not running")
+	}
+	prov.addSrvCh <- service
+	return nil
+}
+
+// DelService removes a known service from the provider
+//nb: provider must be Start)ed
+func (prov *provider) DelService(service ServiceDef) error {
+	if !prov.IsRunning() {
+		return errors.New("DelService, Provider is not running / not initialized")
+	}
+	prov.delSrvCh <- service
+	return nil
+}
+
+//------------
+
 // Start opens a UDP connection and starts the 'marcoPolo' loop listening for queries
-func (prov *Provider) Start() error {
+func (prov *provider) start() error {
 	// open udp connection
 	conn, err := openUdpConn()
 	if err != nil {
@@ -69,61 +127,15 @@ func (prov *Provider) Start() error {
 	return nil
 }
 
-// IsRunning returns true if the provider was started
-func (prov *Provider) IsRunning() bool {
-	if prov.quit == nil {
-		return false
-	}
-
-	select {
-	case <-prov.quit:
-		return false
-	default:
-		return true
-	}
-}
-
-// Stop signals the provider to stop running / listening for queries
-func (prov *Provider) Stop() error {
-	if !prov.IsRunning() {
-		return errors.New("Stop, Provider is not running")
-	}
-
-	close(prov.quit)
-	return nil
-}
-
-// AddService adds a known service to the provider
-//nb: provider must be Start)ed
-func (prov *Provider) AddService(service ServiceDef) error {
-	if !prov.IsRunning() {
-		return errors.New("AddService, Provider is not running")
-	}
-	prov.addSrvCh <- service
-	return nil
-}
-
-// DelService removes a known service from the provider
-//nb: provider must be Start)ed
-func (prov *Provider) DelService(service ServiceDef) error {
-	if !prov.IsRunning() {
-		return errors.New("DelService, Provider is not running / not initialized")
-	}
-	prov.delSrvCh <- service
-	return nil
-}
-
-//------------
-
-func (prov *Provider) addService(service ServiceDef) {
+func (prov *provider) addService(service ServiceDef) {
 	prov.services[service.ServiceName] = service
 }
 
-func (prov *Provider) delService(service ServiceDef) {
+func (prov *provider) delService(service ServiceDef) {
 	delete(prov.services, service.ServiceName)
 }
 
-func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
+func (prov *provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 
 	// did we receive a whosthere mppq query ?
 	if !bytes.HasPrefix(packet.data, []byte(whosthereStr)) {
@@ -162,7 +174,7 @@ func (prov *Provider) processUdpPacket(conn *net.UDPConn, packet *UDPPacket) {
 // main loop (goroutine), will close conn on exit
 // waits for add/del service commands and
 // for data (mppq serfvice queries) from the UDP conn
-func (prov *Provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
+func (prov *provider) marcoPoloLoop(conn *net.UDPConn, started chan<- bool) {
 	defer conn.Close()
 
 	udpChan := make(chan *UDPPacket)

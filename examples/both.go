@@ -27,8 +27,8 @@ func main() {
 	fmt.Println("Starting provider!")
 
 	// start mppq provider
-	prov := mppq.NewProvider()
-	prov.Start()
+	prov, err := mppq.NewProvider()
+	check(err)
 
 	// register a service (provider main loop must be running)
 	hostname, _ := os.Hostname()

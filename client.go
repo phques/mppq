@@ -12,13 +12,20 @@ import (
 	"time"
 )
 
+// Query is used to query for services
+type Query interface {
+	Stop()
+	Done() bool
+	ServiceCh() chan *ServiceDef
+}
+
 // query holds the info required to execute a service query
-type Query struct {
+type query struct {
 	name         string
 	useBroadcast bool
 	// for goroutine loop
 	done      chan struct{} // close to stop / closed when done
-	ServiceCh chan *ServiceDef
+	serviceCh chan *ServiceDef
 }
 
 //----------
@@ -29,8 +36,8 @@ func QueryService(name string, waitFor time.Duration, useBroadcast bool) ([]Serv
 	log.Printf("dbg QueryService useBroadcast = %v\n", useBroadcast)
 
 	// create Query object
-	q := NewQuery(name, useBroadcast)
-	if err := q.Start(); err != nil {
+	q, err := NewQuery(name, useBroadcast)
+	if err != nil {
 		return nil, err
 	}
 
@@ -43,7 +50,7 @@ func QueryService(name string, waitFor time.Duration, useBroadcast bool) ([]Serv
 		case <-timeout.C:
 			q.Stop() // stop Query loop
 			done = true
-		case s := <-q.ServiceCh:
+		case s := <-q.ServiceCh():
 			services = append(services, *s)
 		}
 	}
@@ -53,24 +60,35 @@ func QueryService(name string, waitFor time.Duration, useBroadcast bool) ([]Serv
 
 //------------
 
-// NewQuery creates a Query, ready for Start()
-func NewQuery(name string, useBroadcast bool) (q *Query) {
+// NewQuery creates and starts a Query
+func NewQuery(name string, useBroadcast bool) (Query, error) {
 	// create Query object
-	q = &Query{name: name, useBroadcast: useBroadcast}
+	q := &query{name: name, useBroadcast: useBroadcast}
 	q.done = make(chan struct{})
-	q.ServiceCh = make(chan *ServiceDef)
-	return q
+	q.serviceCh = make(chan *ServiceDef)
+
+	err := q.start()
+	if err != nil {
+		return nil, err
+	}
+
+	return q, nil
 }
 
-// Sto pstops the Query
-func (q *Query) Stop() {
+// ServiceCh returns the ServiceDef channel
+func (q *query) ServiceCh() chan *ServiceDef {
+	return q.serviceCh
+}
+
+// Stop stops the Query
+func (q *query) Stop() {
 	if !q.Done() { // not completely safe !& (race?)
 		close(q.done)
 	}
 }
 
 // Done returns true if Query was stopped
-func (q *Query) Done() bool {
+func (q *query) Done() bool {
 	select {
 	case <-q.done:
 		return true
@@ -79,8 +97,10 @@ func (q *Query) Done() bool {
 	}
 }
 
+// -------------
+
 // Start launches the doQueryLoop goroutine with an UDPConn
-func (q *Query) Start() error {
+func (q *query) start() error {
 	// open udp connection (any local address & port)
 	var err error
 	localUdpAddr := net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
@@ -97,7 +117,7 @@ func (q *Query) Start() error {
 }
 
 // sendQuery sends the mppq whosThere query for a service
-func (q *Query) sendQuery(udpConn *net.UDPConn) {
+func (q *query) sendQuery(udpConn *net.UDPConn) {
 	queryStr := whosthereStr + q.name
 	log.Printf("sendQuery <%v>\n", queryStr)
 
@@ -112,7 +132,7 @@ func (q *Query) sendQuery(udpConn *net.UDPConn) {
 
 // doQueryLoop loops until timeout, sending recvd ServiceDef on channel
 // normally runs in a goroutine. udpConn closed on exit
-func (q *Query) doQueryLoop(udpConn *net.UDPConn) {
+func (q *query) doQueryLoop(udpConn *net.UDPConn) {
 
 	defer udpConn.Close()
 
@@ -149,18 +169,18 @@ func (q *Query) doQueryLoop(udpConn *net.UDPConn) {
 				// send serviceDef,
 				// note that if client does not read fast enough,
 				// we will timeout above !
-				q.ServiceCh <- serviceDef
+				q.serviceCh <- serviceDef
 			}
 		}
 	}
 
 	// client.udpConn will close on return, so udpReadLoop() will stop
 	close(udpReadQuitChan) // signal that we have closed conn / stopping
-	close(q.ServiceCh)
+	close(q.serviceCh)
 }
 
 // processUdpPacket
-func (q *Query) processUdpPacket(udpPacket *UDPPacket) *ServiceDef {
+func (q *query) processUdpPacket(udpPacket *UDPPacket) *ServiceDef {
 	log.Printf("recvd response [%s]", udpPacket.data)
 
 	// did we receive a whosthere mppq query ?

@@ -1,2 +1,12 @@
++ use Context
+
++ udpReadLoop
+  + read from socket in a goroutine (so can respond to quit)
+    -> should also permit us to clean up / simplify code (single select !?)
+
++ client func (q *query) doQueryLoopy
+  // send serviceDef,
+  q.serviceCh <- serviceDef
+  .. this is blocking until client reads
 
 + replace log.Fatal() !

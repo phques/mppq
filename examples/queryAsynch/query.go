@@ -20,13 +20,13 @@ func check(err error) {
 	}
 }
 
-func loop(q *mppq.Query) {
+func loop(q mppq.Query) {
 	delay := time.Second * 5
 	timeout := time.NewTimer(delay)
 	fmt.Println("querying for ", delay)
 	for {
 		select {
-		case service := <-q.ServiceCh:
+		case service := <-q.ServiceCh():
 			fmt.Println("got serfvice :", service)
 		case <-timeout.C:
 			fmt.Println("stopping")
@@ -39,8 +39,8 @@ func loop(q *mppq.Query) {
 func main() {
 	flag.Parse()
 
-	query := mppq.NewQuery("androidPush", *useBroadcast)
-	check(query.Start())
+	query, err := mppq.NewQuery("androidPush", *useBroadcast)
+	check(err)
 
 	loop(query)
 
