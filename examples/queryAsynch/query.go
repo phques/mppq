@@ -21,7 +21,13 @@ func check(err error) {
 }
 
 func loop(q mppq.Query) {
-	delay := time.Second * 5
+	// test debug, dont read for 3secs, we should see
+	// 'drop oldest serviceDefs entry' happen
+	q.SetSendServiceDefsMaxLen(2) // set a short buffer
+	time.Sleep(3 * time.Second)
+
+	// this should 1st quickly read the buffered entries
+	delay := time.Second * 2
 	timeout := time.NewTimer(delay)
 	fmt.Println("querying for ", delay)
 	for {

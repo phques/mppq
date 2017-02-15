@@ -17,6 +17,8 @@ type Query interface {
 	Stop()
 	Done() bool
 	ServiceCh() chan *ServiceDef
+	// for debug purpose
+	SetSendServiceDefsMaxLen(maxLen int)
 }
 
 // query holds the info required to execute a service query
@@ -26,6 +28,8 @@ type query struct {
 	// for goroutine loop
 	done      chan struct{} // close to stop / closed when done
 	serviceCh chan *ServiceDef
+	// max len of buffer holding serviceDef to send in query loop
+	sendServiceDefsMaxLen int // is here so we can set value for debug
 }
 
 //----------
@@ -66,6 +70,7 @@ func NewQuery(name string, useBroadcast bool) (Query, error) {
 	q := &query{name: name, useBroadcast: useBroadcast}
 	q.done = make(chan struct{})
 	q.serviceCh = make(chan *ServiceDef)
+	q.sendServiceDefsMaxLen = 1024
 
 	err := q.start()
 	if err != nil {
@@ -73,6 +78,12 @@ func NewQuery(name string, useBroadcast bool) (Query, error) {
 	}
 
 	return q, nil
+}
+
+// ServiceCh returns the ServiceDef channel
+// debug purpose
+func (q *query) SetSendServiceDefsMaxLen(maxLen int) {
+	q.sendServiceDefsMaxLen = maxLen
 }
 
 // ServiceCh returns the ServiceDef channel
@@ -149,6 +160,12 @@ func (q *query) doQueryLoop(udpConn *net.UDPConn) {
 	sendTimeout := time.NewTimer(sendRepeatDelay)
 
 	// loop until timeout, sending recvd ServiceDef on channel
+
+	// these are used to buffer pending sends of recvd services
+	var serviceDefToSend *ServiceDef // holds serviceDefs[0] | nil
+	var sendServiceDefChan chan *ServiceDef
+	var serviceDefs []*ServiceDef
+
 	done := false
 	for !done {
 		select {
@@ -166,10 +183,31 @@ func (q *query) doQueryLoop(udpConn *net.UDPConn) {
 			// received udp reponse packet, processs it
 			serviceDef := q.processUdpPacket(udpPacket)
 			if serviceDef != nil {
-				// send serviceDef,
-				// note that if client does not read fast enough,
-				// we will timeout above !
-				q.serviceCh <- serviceDef
+				// buffer is full, just drop oldest entry
+				if len(serviceDefs) >= q.sendServiceDefsMaxLen {
+					log.Println("drop oldest serviceDefs entry")
+					serviceDefs = serviceDefs[1:]
+				}
+
+				// add new serviceDef to buffer to send
+				serviceDefs = append(serviceDefs, serviceDef)
+				serviceDefToSend = serviceDefs[0]
+
+				// we can now send to this channel
+				sendServiceDefChan = q.serviceCh
+			}
+
+		case sendServiceDefChan <- serviceDefToSend:
+			// remove 1st entry that was just sent
+			serviceDefs = serviceDefs[1:]
+
+			if len(serviceDefs) > 0 {
+				// set next entry to be sent
+				serviceDefToSend = serviceDefs[0]
+			} else {
+				// nothing left to send
+				serviceDefToSend = nil
+				sendServiceDefChan = nil
 			}
 		}
 	}
