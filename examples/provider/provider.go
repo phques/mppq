@@ -31,11 +31,17 @@ func main() {
 		//test,  wait
 		//	select {}
 
+		// 'provide' for 10secs
 		delay := time.Second * 10
 		fmt.Println("providing for", delay)
 		time.Sleep(delay)
+		// then stop
 		prov.Stop()
-		time.Sleep(1500 * time.Millisecond)
+
+		// wait (debug) for goroutines to stop
+		time.Sleep(500 * time.Millisecond)
+		// debug
+		//panic(nil)
 	} else {
 		fmt.Printf("error %v\n", err)
 	}

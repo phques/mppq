@@ -52,48 +52,77 @@ type UDPPacket struct {
 
 //------------
 
+// readFromUDP starts a goroutine that feeds the returned channel
+// with data read from the UDP connection
+// the data channel will be closed automatically when the goroutine stops
+func readFromUDP(conn *net.UDPConn, quitChan <-chan struct{}) chan *UDPPacket {
+	ch := make(chan *UDPPacket)
+
+	go func() {
+		defer close(ch) // close channel when we stop
+		data := make([]byte, 4*1024)
+
+		for {
+			// read from UDP connection
+			// can't know if err is caused by closed connection (?)
+			nbRead, remoteAddr, err := conn.ReadFromUDP(data)
+
+			select {
+			case <-quitChan:
+				// ok, dont display error, we were asked to stop
+				log.Println("readFromUDP recvd quit (conn closed)")
+				return
+
+			default:
+				if err != nil {
+					// nothing on quit channel, display error before quiting
+					log.Print("readFromUDP, error reading udp socket. ", err)
+					return
+				}
+			}
+
+			// create new *copy* array/slice of proper length = nb bytes nbRead
+			// (avoid keeping ref to original buffer)
+			udpData := make([]byte, nbRead)
+			copy(udpData, data[:nbRead])
+
+			// create an UDPPacket
+			udpPacket := &UDPPacket{remoteAddr: remoteAddr, data: udpData}
+
+			// send on out channel
+			// here we assume that udpReadLoop will read quickly
+			ch <- udpPacket
+		}
+	}()
+
+	return ch
+}
+
 // udpReadLoop waits for incoming UDP message/data
 // and sends it on msgChan.
 // Close conn to stop, close quitChan before though!
 func udpReadLoop(conn *net.UDPConn, msgChan chan<- *UDPPacket, quitChan <-chan struct{}) {
 
+	dataCh := readFromUDP(conn, quitChan)
+
 	// wait for msg, send it on channel
-	data := make([]byte, 4*1024)
 	for {
 		// check if we were asked to quit
 		select {
 		case <-quitChan:
 			log.Println("udpReadLoop recvd quit")
 			return
-		default:
-		}
 
-		// read from UDP connection
-		// can't know if err is caused by closed connection (?)
-		nbRead, remoteAddr, err := conn.ReadFromUDP(data)
+		case udpPacket := <-dataCh:
+			if udpPacket == nil {
+				// dataCh was closed,
+				// something must have happened with UDPConn
+				return
 
-		if err != nil {
-			select {
-			case <-quitChan:
-				// ok, dont display error, we were asked to stop
-				log.Println("udpReadLoop recvd quit (conn closed)")
-				return
-			default:
-				// nothing on quit channel, display error before quiting
-				log.Print("udpReadLoop, error reading udp socket. ", err)
-				return
+			} else {
+				// send it on the channel
+				msgChan <- udpPacket
 			}
 		}
-
-		// create new *copy* array/slice of proper length = nb bytes nbRead
-		// (avoid keeping ref to original buffer)
-		udpData := make([]byte, nbRead)
-		copy(udpData, data[:nbRead])
-
-		// create & fill a new UDPPacket
-		udpPacket := &UDPPacket{remoteAddr: remoteAddr, data: udpData}
-
-		// send it on the channel
-		msgChan <- udpPacket
 	}
 }
